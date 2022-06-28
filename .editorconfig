@@ -1,0 +1,18 @@
+# EditorConfig is awesome: http://EditorConfig.org
+
+# all files
+[*]
+end_of_line = crlf
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# C/C++
+[*.{c,cpp,cxx,h,hpp,hxx,ipp}]
+indent_style = tab
+indent_size = 4
+charset = utf-8-bom
+
+# Translation Portable Object
+[*.po]
+end_of_line = lf
+charset = utf-8

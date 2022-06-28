@@ -1,0 +1,67 @@
+---
+Language:        Cpp
+Standard:        Cpp11
+BasedOnStyle:    LLVM
+ColumnLimit:     80
+IndentWidth:     4
+TabWidth:        4
+UseTab:          ForIndentation
+AccessModifierOffset: -4
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: false
+AlwaysBreakTemplateDeclarations: true
+AllowShortBlocksOnASingleLine: Empty
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortCaseLabelsOnASingleLine: true
+BreakConstructorInitializersBeforeComma: true
+BreakConstructorInitializers: BeforeComma
+ConstructorInitializerIndentWidth: 0
+Cpp11BracedListStyle: false
+CompactNamespaces: true
+IndentCaseLabels: true
+IndentRequires: true
+IndentPPDirectives: AfterHash
+KeepEmptyLinesAtTheStartOfBlocks: false
+PointerAlignment: Middle
+SortIncludes: true
+IncludeBlocks: Preserve
+IncludeCategories:
+  # 'stdafx.h' must come first if present
+  - Regex:           'stdafx.h'
+    Priority:       -1
+  # Qt Headers in <> without extension.
+  - Regex:           '<(Q|Qt)[A-Z][A-Za-z0-9]+>'
+    Priority:        4
+  # Headers in <> without extension.
+  - Regex:           '<([A-Za-z0-9\Q/-_\E])+>'
+    Priority:        6
+  # Headers in <> from specific external libraries.
+  - Regex:           '<(boost)\/.+>'
+    Priority:        5
+  # Headers in <> with extension.
+  - Regex:           '<([A-Za-z0-9.\Q/-_\E])+>'
+    Priority:        3
+  # Qt ui_ Headers.
+  - Regex:           '"ui_[A-Za-z0-9]+\.hpp"'
+    Priority:        1
+  # Headers in "" with extension.
+  - Regex:           '"([A-Za-z0-9.\Q/-_\E])+"'
+    Priority:        2
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass:      false
+  AfterControlStatement: false
+  AfterEnum:       false
+  AfterFunction:   false
+  AfterNamespace:  false
+  AfterObjCDeclaration: false
+  AfterStruct:     false
+  AfterUnion:      false
+  BeforeCatch:     false
+  BeforeElse:      false
+  IndentBraces:    false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+...
+
