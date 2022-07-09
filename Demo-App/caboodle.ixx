@@ -1,142 +1,110 @@
 module;
-
 #include <filesystem>
 #include <print>
-#include <ranges>
 #include <string>
+#include <string_view>
+#include <tuple>
 
-export module caboodle;
-import boost.program_options;
-
-namespace fs  = std::filesystem;
-namespace rgs = std::ranges;
-namespace vws = rgs::views;
+export module the.whole.caboodle;
+import boost.program_options; // precompiled module, taken from BMI cache
 
 namespace caboodle {
 
-//--------------------------------------------------------------------------------------------
+// fs::path::string() has unspecified encoding on Windows
+// convert from UTF16 to UTF8 with guaranteed semantics
+export std::string utf8Path(const std::filesystem::path & Path);
 
-export struct EternalDirectoryIterator : rgs::view_base {
-	using base              = fs::directory_iterator;
-	using iterator_category = std::input_iterator_tag;
-	using difference_type   = ptrdiff_t;
-	using value_type        = fs::path;
-	using pointer           = const value_type *;
-	using reference         = const value_type &;
+//------------------------------------------------------------------------------
 
-	static constexpr auto Options = fs::directory_options::skip_permission_denied;
-	struct Sentinel {};
+boost::program_options::variables_map parseOptions();
 
-	EternalDirectoryIterator() noexcept = default;
-	explicit EternalDirectoryIterator(fs::path Dir) noexcept
-	: Directory_{ std::move(Dir) } {
-		Iter_  = restart(Directory_);
-		Error_ = Iter_ == End_;
-	}
-
-	bool operator==(const EternalDirectoryIterator & rhs) const noexcept { return Iter_ == rhs.Iter_; }
-	bool operator==(Sentinel) const noexcept { return false; }
-
-	fs::path operator*() const noexcept {
-		if (Error_)
-			return {};
-		return Iter_->path();
-	}
-
-	EternalDirectoryIterator & operator++() {
-		std::error_code ec;
-		if (Iter_ == End_ || Iter_.increment(ec) == End_)
-			Iter_ = restart(Directory_);
-		Error_ = ec || Iter_ == End_;
-		return *this;
-	}
-
-	EternalDirectoryIterator & operator++(int); // just declare to satisfy std::weakly_incementable
-
-	friend inline EternalDirectoryIterator begin(EternalDirectoryIterator it) {
-		return static_cast<EternalDirectoryIterator &&>(it);
-	}
-	friend inline Sentinel end(EternalDirectoryIterator) { return {}; }
-
-private:
-	static base restart(const fs::path & Directory) {
-		std::error_code err;
-		return base{ Directory, Options, err };
-	}
-
-	fs::path Directory_;
-	base Iter_;
-	base End_;
-	bool Error_ = false;
-};
+export auto getOptions() {
+	const auto Option = parseOptions();
+	return std::tuple{ Option["media"].as<std::string>(),
+		               Option["server"].as<std::string>() };
+}
 
 } // namespace caboodle
 
-template <>
-inline constexpr bool rgs::enable_borrowed_range<caboodle::EternalDirectoryIterator> = true;
+module : private; // names invisible, declarations unreachable!
 
-static_assert(rgs::range<caboodle::EternalDirectoryIterator>);
-static_assert(rgs::viewable_range<caboodle::EternalDirectoryIterator>);
-static_assert(rgs::borrowed_range<caboodle::EternalDirectoryIterator>);
+using namespace std; // bad practice!
 
-//--------------------------------------------------------------------------------------------
+#ifdef _WIN32
+#	define APICALL __declspec(dllimport) __stdcall
+#else
+#	define APICALL
+#endif
+
+namespace winapi {
+
+extern "C" {
+int APICALL WideCharToMultiByte(unsigned, unsigned long, const wchar_t *, int,
+                                char *, int, const char *, int *);
+}
+static constexpr auto UTF8 = 65001;
+
+static inline size_t estimateNarrow(wstring_view U16) noexcept {
+	return WideCharToMultiByte(UTF8, 0, U16.data(),
+	                           static_cast<int>(U16.size()), nullptr, 0,
+	                           nullptr, nullptr);
+}
+static inline auto convertFromWide(wstring_view U16) noexcept {
+	return [&](char * Buffer, size_t Size) -> size_t {
+		WideCharToMultiByte(UTF8, 0, U16.data(), static_cast<int>(U16.size()),
+		                    Buffer, static_cast<int>(Size), nullptr, nullptr);
+		return Size;
+	};
+}
+
+template <typename Str = string>
+	requires(requires(Str s, size_t r, size_t (*f)(char *, size_t)) {
+		{ s.resize_and_overwrite(r, f) };
+	})
+decltype(auto) toUTF8(wstring_view Utf16, Str && Utf8 = {}) {
+	Utf8.resize_and_overwrite(estimateNarrow(Utf16), convertFromWide(Utf16));
+	return static_cast<Str &&>(Utf8);
+}
+} // namespace winapi
 
 namespace caboodle {
 
-#ifdef _WIN32
-extern "C" {
-__declspec(dllimport) int __stdcall WideCharToMultiByte(unsigned, unsigned long, const wchar_t *, int, char *, int,
-                                                        const char *, int *);
-}
-#	pragma comment(lib, "kernel32")
-namespace winapi {
-static constexpr auto UTF8 = 65001;
-static constexpr auto NFC  = 1;
-
-export template <typename Str = std::string>
-	requires(std::is_same_v<typename Str::value_type, char> && !std::is_const_v<Str> &&
-	         requires(Str s, size_t r, size_t (*f)(char *, size_t)) { { s.resize_and_overwrite(r, f) }; })
-decltype(auto) toUTF8(std::wstring_view Utf16, Str && Result = {}) noexcept {
-	Result.resize_and_overwrite(
-	    WideCharToMultiByte(UTF8, 0, Utf16.data(), static_cast<int>(Utf16.size()), nullptr, 0, nullptr, nullptr),
-	    [&](char * Buffer, size_t Size) {
-		    WideCharToMultiByte(UTF8, 0, Utf16.data(), static_cast<int>(Utf16.size()), Buffer, static_cast<int>(Size),
-		                        nullptr, nullptr);
-		    return Size;
-	    });
-	return static_cast<Str &&>(Result);
-}
-} // namespace winapi
-#endif
-
-//--------------------------------------------------------------------------------------------
-
-export std::string u8Path(const fs::path & Path) {
-	if constexpr (_WIN32)
-		return winapi::toUTF8(Path.native());
+string utf8Path(const filesystem::path & Path) {
+	if constexpr (_WIN32 + 0)
+		return winapi::toUTF8(Path.wstring());
 	else
-		return Path.native();
+		return Path.string();
 }
 
-//--------------------------------------------------------------------------------------------
+namespace po = boost::program_options;
+using namespace po::ext;
 
-export auto getOptions() {
-	namespace po = boost::program_options;
+po::variables_map parseOptions() {
 	po::options_description OptionsDescription("Options available");
 	// clang-format off
 	OptionsDescription.add_options()
 		("help", "produce help message")
-		("media", po::value<std::string>()->default_value("media"), "media directory")
-		("server", po::value<std::string>()->default_value(""), "server name or ip")
+		("media", po::value<string>()->default_value("media"), "media directory")
+		("server", po::value<string>()->default_value(""), "server name or ip")
 		;
 	// clang-format on
+	po::positional_options_description PositionalOptions;
+	PositionalOptions.add("media", 1).add("server", 2);
+
 	po::variables_map Option;
-	po::ext::parseCommandline(Option, OptionsDescription);
-	if (Option.count("help")) {
-		std::println("{}", po::ext::getHelpText(OptionsDescription));
+	bool needHelp = false;
+	try {
+		Option = parseCommandline(OptionsDescription, PositionalOptions);
+	} catch (...) { needHelp = true; }
+	if (Option.count("help") || Option["media"].as<string>().contains('?'))
+		needHelp = true;
+
+	if (needHelp) {
+		println("{}", getHelpText(OptionsDescription));
 		exit(-1);
+	} else {
+		return Option;
 	}
-	return std::make_tuple(Option["media"].as<std::string>(), Option["server"].as<std::string>());
 }
 
 } // namespace caboodle

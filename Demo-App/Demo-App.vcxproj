@@ -1,17 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug|Win32">
-      <Configuration>Debug</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Win32">
-      <Configuration>Release</Configuration>
-      <Platform>Win32</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Release|x64">
       <Configuration>Release</Configuration>
@@ -31,10 +23,20 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ItemGroup>
+    <ClCompile Include="caboodle.ixx" />
+    <ClCompile Include="generator.ixx" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="nettypes.ixx" />
+    <ClCompile Include="video.ixx" />
+    <ClCompile Include="videodecoder.cpp" />
+    <ClCompile Include="videodecoder.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="c_resource.hpp" />
+    <ClInclude Include="generator.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="Demo-App.xml" />
   </ItemGroup>
   <ItemDefinitionGroup>
     <ClCompile>
@@ -44,6 +46,9 @@
       <SubSystem>Console</SubSystem>
       <AdditionalOptions>/Ignore:4199 %(AdditionalOptions)</AdditionalOptions>
     </Link>
+    <Manifest>
+      <AdditionalManifestFiles>Demo-App.xml %(AdditionalManifestFiles)</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

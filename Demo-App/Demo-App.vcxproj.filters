@@ -13,15 +13,45 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Modules">
+      <UniqueIdentifier>{14e9f923-ce3f-41f2-bd8b-1901ef5d779a}</UniqueIdentifier>
+      <Extensions>ixx</Extensions>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="caboodle.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="video.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="nettypes.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="videodecoder.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="videodecoder.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="generator.ixx">
+      <Filter>Modules</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="c_resource.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="generator.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="Demo-App.xml">
+      <Filter>Resource Files</Filter>
+    </Xml>
   </ItemGroup>
 </Project>

@@ -13,6 +13,7 @@ AlwaysBreakTemplateDeclarations: true
 AllowShortBlocksOnASingleLine: Empty
 AllowShortFunctionsOnASingleLine: Empty
 AllowShortCaseLabelsOnASingleLine: true
+AllowShortLambdasOnASingleLine: Empty
 BreakConstructorInitializersBeforeComma: true
 BreakConstructorInitializers: BeforeComma
 ConstructorInitializerIndentWidth: 0

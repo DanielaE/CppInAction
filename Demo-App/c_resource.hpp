@@ -12,64 +12,65 @@ template <typename T, auto * ConstructFunction, auto * DestructFunction>
 	             std::is_function_v<
 	                 std::remove_pointer_t<decltype(DestructFunction)>>)
 struct c_resource {
-	using pointer      = T *;
-	using element_type = T;
+	using pointer       = T *;
+	using const_pointer = std::add_const_t<T> *;
+	using element_type  = T;
 
 private:
 	using constructor = decltype(ConstructFunction);
 	using destructor  = decltype(DestructFunction);
 
-	static constexpr constructor c_ = ConstructFunction;
-	static constexpr destructor d_  = DestructFunction;
+	static constexpr constructor construct = ConstructFunction;
+	static constexpr destructor destruct  = DestructFunction;
 
 	static constexpr T * null = c_resource_null_value<T>;
 
 	struct construct_t {};
 
 public:
-	static constexpr inline construct_t construct = {};
+	static constexpr inline construct_t constructed = {};
 
 	constexpr c_resource() noexcept = default;
 	constexpr explicit c_resource(
 	    construct_t) noexcept requires std::is_invocable_r_v<T *, constructor>
-	: ptr_{ c_() } {};
+	: ptr_{ construct() } {};
 
 	template <typename... Ts>
 		requires(sizeof...(Ts) > 0 &&
 		         std::is_invocable_r_v<T *, constructor, Ts...>)
 	[[nodiscard]] constexpr explicit(sizeof...(Ts) == 1)
 	    c_resource(Ts &&... Args) noexcept
-	: ptr_{ c_(static_cast<Ts &&>(Args)...) } {}
+	: ptr_{ construct(static_cast<Ts &&>(Args)...) } {}
 
 	template <typename... Ts>
 		requires(sizeof...(Ts) > 0 &&
 		         std::is_invocable_v<constructor, T **, Ts...> &&
 		         requires(T * p, Ts... Args) {
-			         { c_(&p, Args...) } -> std::same_as<void>;
+			         { construct(&p, Args...) } -> std::same_as<void>;
 		         })
 	[[nodiscard]] constexpr explicit(sizeof...(Ts) == 1)
 	    c_resource(Ts &&... Args) noexcept
 	: ptr_{ null } {
-		c_(&ptr_, static_cast<Ts &&>(Args)...);
+		construct(&ptr_, static_cast<Ts &&>(Args)...);
 	}
 
 	template <typename... Ts>
 		requires(std::is_invocable_v<constructor, T **, Ts...>)
 	[[nodiscard]] constexpr auto replace(Ts &&... Args) noexcept {
-		destruct(ptr_);
+		_destruct(ptr_);
 		ptr_ = null;
-		return c_(&ptr_, static_cast<Ts &&>(Args)...);
+		return construct(&ptr_, static_cast<Ts &&>(Args)...);
 	}
 
 	template <typename... Ts>
 		requires(std::is_invocable_v<constructor, T **, Ts...> && requires(
 		    T * p, Ts... Args) {
-			{ c_(&p, Args...) } -> std::same_as<void>;
+			{ construct(&p, Args...) } -> std::same_as<void>;
 		})
 	constexpr void replace(Ts &&... Args) noexcept {
-		destruct(ptr_);
+		_destruct(ptr_);
 		ptr_ = null;
-		c_(&ptr_, static_cast<Ts &&>(Args)...);
+		construct(&ptr_, static_cast<Ts &&>(Args)...);
 	}
 
 	[[nodiscard]] constexpr c_resource(c_resource && other) noexcept {
@@ -78,7 +79,7 @@ public:
 	};
 	constexpr c_resource & operator=(c_resource && rhs) noexcept {
 		if (this != &rhs) {
-			destruct(ptr_);
+			_destruct(ptr_);
 			ptr_     = rhs.ptr_;
 			rhs.ptr_ = null;
 		}
@@ -95,14 +96,15 @@ public:
 
 	constexpr ~c_resource() noexcept = delete;
 	constexpr ~c_resource() noexcept requires destructible {
-		destruct(ptr_);
+		_destruct(ptr_);
 	}
 	constexpr void clear() noexcept requires destructible {
-		destruct(ptr_);
+		_destruct(ptr_);
 		ptr_ = null;
 	}
 	constexpr c_resource & operator=(std::nullptr_t) noexcept {
 		clear();
+		return *this;
 	}
 
 	[[nodiscard]] constexpr explicit operator bool() const noexcept {
@@ -112,27 +114,25 @@ public:
 		return ptr_ == null;
 	}
 
-	template <typename U>
-	using const_as =
-	    std::conditional_t<std::is_const_v<std::remove_reference_t<U>>,
-	                       const T *, T *>;
 	template <typename U, typename V>
 	static constexpr bool less_const = std::is_const_v<U> < std::is_const_v<V>;
+	template <typename U, typename V>
+	static constexpr bool similar = std::is_same_v<std::remove_const_t<U>, T>;
 
 	template <typename U, typename Self>
-		requires(std::is_same_v<std::remove_cv_t<U>, T> && !less_const<U, Self>)
+		requires(similar<U, T> && !less_const<U, Self>)
 	[[nodiscard]] constexpr operator U *(this Self && self) noexcept {
-		return const_as<Self>{ self.ptr_ };
+		return like(self);
 	}
 	[[nodiscard]] constexpr auto operator->(this auto && self) noexcept {
-		return const_as<decltype(self)>{ self.ptr_ };
+		return like(self);
 	}
 	[[nodiscard]] constexpr auto get(this auto && self) noexcept {
-		return const_as<decltype(self)>{ self.ptr_ };
+		return like(self);
 	}
 
 	constexpr void reset(pointer ptr = pointer()) noexcept {
-		destruct(ptr_);
+		_destruct(ptr_);
 		ptr_ = ptr;
 	};
 
@@ -160,16 +160,24 @@ public:
 	};
 
 private:
-	constexpr static void destruct(
+	constexpr static void _destruct(
 	    pointer & p) noexcept requires std::is_invocable_v<destructor, T *> {
 		if (p != null)
-			d_(p);
+			destruct(p);
 	}
-	constexpr static void destruct(
+	constexpr static void _destruct(
 	    pointer & p) noexcept requires std::is_invocable_v<destructor, T **> {
 		if (p != null)
-			d_(&p);
+			destruct(&p);
 	}
+
+	static auto like(c_resource & self) noexcept {
+		return self.ptr_;
+	}
+	static auto like(const c_resource & self) noexcept {
+		return static_cast<const_pointer>(self.ptr_);
+	}
+
 	pointer ptr_ = null;
 };
 

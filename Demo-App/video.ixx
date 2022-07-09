@@ -1,11 +1,16 @@
-module;
+﻿module;
 #include <chrono>
 #include <span>
+#include <type_traits>
 
 export module video;
-import libav;
+import libav; // precompiled module, taken from BMI cache
 
-export namespace video {
+using namespace std;
+using namespace std::chrono;
+
+export
+namespace video {
 enum PixelFormat : unsigned char { invalid, RGBA, BGRA };
 
 PixelFormat fromLibav(int Format) {
@@ -16,37 +21,46 @@ PixelFormat fromLibav(int Format) {
 	}
 }
 
-#pragma pack(push, 1)
 struct FrameHeader {
-	static constexpr auto Size = 16;
+	static constexpr auto Size = 16u;
 
-	using MicroSeconds = std::chrono::duration<unsigned, std::micro>;
+	using µSeconds = duration<unsigned, micro>;
 
 	int Width_ : 16;
 	int Height_ : 16;
 	int LinePitch_ : 16;
-	int PixelSize_ : 8;
 	int Format_ : 8;
 	int Sequence_;
-	MicroSeconds Timestamp_;
+	µSeconds Timestamp_;
 
-	[[nodiscard]] constexpr size_t size() const noexcept { return static_cast<size_t>(Height_) * LinePitch_; }
-	[[nodiscard]] constexpr bool empty() const noexcept { return size() == 0; }
-	[[nodiscard]] constexpr bool filler() const noexcept { return Sequence_ == 0 && Timestamp_.count() > 0; }
-	[[nodiscard]] constexpr bool null() const noexcept { return Sequence_ == 0 && Timestamp_.count() == 0; }
+	[[nodiscard]] constexpr size_t size() const noexcept {
+		return static_cast<size_t>(Height_) * LinePitch_;
+	}
+	[[nodiscard]] constexpr bool empty() const noexcept {
+		return size() == 0;
+	}
+	[[nodiscard]] constexpr bool filler() const noexcept {
+		return Sequence_ == 0 && Timestamp_.count() > 0;
+	}
+	[[nodiscard]] constexpr bool null() const noexcept {
+		return Sequence_ == 0 && Timestamp_.count() == 0;
+	}
 };
 static_assert(sizeof(FrameHeader) == FrameHeader::Size);
-#pragma pack(pop)
+static_assert(is_trivial_v<FrameHeader>); // guarantee relocatability!
+
+using tPixels = span<const std::byte>;
 
 struct Frame {
 	FrameHeader Header_;
-	std::span<const std::byte> Pixels_;
+	tPixels Pixels_;
 };
 
-video::Frame makeFiller(std::chrono::milliseconds D) {
+video::Frame makeFiller(milliseconds Duration) {
 	FrameHeader Header{ 0 };
-	Header.Timestamp_ = D;
+	Header.Timestamp_ = Duration;
 	return { Header, {} };
 }
 
+constexpr video::Frame noFrame{ 0 };
 } // namespace video
