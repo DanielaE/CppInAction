@@ -13,26 +13,41 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{DF4B393A-367F-4F69-8DF8-94775EF8FB36}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>$(DefaultWindowsSDKVersion)</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <UseDebugLibraries Condition="'$(Configuration)'=='Debug'">true</UseDebugLibraries>
+    <WholeProgramOptimization Condition="'$(Configuration)'=='Release'">true</WholeProgramOptimization>
+    <PlatformToolset Condition="'$(DefaultPlatformToolset)' != ''">$(DefaultPlatformToolset)</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ItemGroup>
-    <ClCompile Include="caboodle.ixx" />
-    <ClCompile Include="generator.ixx" />
+    <ClCompile Include="gui.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="nettypes.ixx" />
+    <ClCompile Include="caboodle.ixx" />
+    <ClCompile Include="executor.ixx" />
+    <ClCompile Include="net.cpp" />
+    <ClCompile Include="net.ixx" />
+    <ClCompile Include="generator.ixx" />
+    <ClCompile Include="gui.ixx" />
     <ClCompile Include="video.ixx" />
-    <ClCompile Include="videodecoder.cpp" />
+    <ClCompile Include="videoframe.ixx" />
     <ClCompile Include="videodecoder.ixx" />
+    <ClCompile Include="videodecoder.cpp">
+      <CompileAs>CompileAsCppModuleInternalPartition</CompileAs>
+      <WholeProgramOptimization Condition="'$(Configuration)'=='Release'">false</WholeProgramOptimization>
+    </ClCompile>
+    <ClCompile Include="c_resource.hpp">
+      <CompileAs>CompileAsHeaderUnit</CompileAs>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="c_resource.hpp" />
     <ClInclude Include="generator.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -40,7 +55,8 @@
   </ItemGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <DisableSpecificWarnings>4127;5050</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4127;4702;5050</DisableSpecificWarnings>
+      <AdditionalOptions>/headerUnit $(SolutionDir)\msvc-stl\allstd.hpp=allstd.hpp.ifc %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -51,6 +67,4 @@
     </Manifest>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-  </ImportGroup>
 </Project>

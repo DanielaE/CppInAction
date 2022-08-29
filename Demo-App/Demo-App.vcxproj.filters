@@ -25,10 +25,10 @@
     <ClCompile Include="caboodle.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
-    <ClCompile Include="video.ixx">
+    <ClCompile Include="videoframe.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
-    <ClCompile Include="nettypes.ixx">
+    <ClCompile Include="net.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
     <ClCompile Include="videodecoder.ixx">
@@ -40,11 +40,26 @@
     <ClCompile Include="generator.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="gui.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="video.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="executor.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="net.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="c_resource.hpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="gui.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="c_resource.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="generator.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

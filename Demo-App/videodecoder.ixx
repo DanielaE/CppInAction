@@ -1,10 +1,9 @@
-module;
-#include <filesystem>
+export module video:decoder;
+import std;
 
-export module video.decoder;
 import generator;
-import video;
+import :frame;
 
-namespace videodecoder {
+namespace video {
 export std::generator<video::Frame> makeFrames(std::filesystem::path);
 }

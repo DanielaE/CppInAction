@@ -1,23 +1,11 @@
-﻿module;
-#include <bit>
-#include <chrono>
-#include <coroutine>
-#include <filesystem>
-#include <print>
-#include <ranges>
-#include <span>
+﻿module video:decoder.pipeline;
+import std;
 
-#include "c_resource.hpp"
-
-module video.decoder;
-
+import :frame;
+import "c_resource.hpp";
+import generator;
 import the.whole.caboodle;
 import libav; // precompiled module, taken from BMI cache
-
-using namespace std;         // bad practice - only for presentation!
-using namespace std::chrono; // bad practice - only for presentation!
-
-using namespace std::chrono_literals;
 
 namespace fs  = std::filesystem;
 namespace rgs = std::ranges;
@@ -27,10 +15,10 @@ namespace vws = rgs::views;
 // wrap the libav (a.k.a. FFmpeg https://ffmpeg.org/) C API types and their
 // assorted functions
 namespace libav {
-using Codec   = stdex::c_resource<AVCodecContext, avcodec_alloc_context3,
-                                avcodec_free_context>;
-using File    = stdex::c_resource<AVFormatContext, avformat_open_input,
-                               avformat_close_input>;
+using Codec =
+    stdex::c_resource<AVCodecContext, avcodec_alloc_context3, avcodec_free_context>;
+using File =
+    stdex::c_resource<AVFormatContext, avformat_open_input, avformat_close_input>;
 using tFrame  = stdex::c_resource<AVFrame, av_frame_alloc, av_frame_free>;
 using tPacket = stdex::c_resource<AVPacket, av_packet_alloc, av_packet_free>;
 
@@ -38,198 +26,196 @@ using tPacket = stdex::c_resource<AVPacket, av_packet_alloc, av_packet_free>;
 struct Frame : tFrame {
 	[[nodiscard]] Frame()
 	: tFrame(constructed){};
-	[[nodiscard]] auto dropReference() {
-		return Frame::guard<av_frame_unref>(*this);
-	}
+	[[nodiscard]] auto dropReference() { return Frame::guard<av_frame_unref>(*this); }
 };
 struct Packet : tPacket {
 	[[nodiscard]] Packet()
 	: tPacket(constructed){};
-	[[nodiscard]] auto dropReference() {
-		return Packet::guard<av_packet_unref>(*this);
-	}
+	[[nodiscard]] auto dropReference() { return Packet::guard<av_packet_unref>(*this); }
 };
 } // namespace libav
 
-namespace videodecoder {
+namespace video {
 
-//------------------------------------------------------------------------------
-// generate an endless stream of paths of the lastest contents of given
-// Directory on each iteration step paths are empty if there are none available
+// generate an endless stream of paths of the lastest contents of given Directory on each
+// iteration step.
+// the returned paths are empty if there are no directory contents.
 
-struct EternalDirectoryIterator : rgs::view_base {
+struct InfiniteDirectoryIterator {
 	using base              = fs::directory_iterator;
-	using iterator_category = input_iterator_tag;
-	using difference_type   = ptrdiff_t;
+	using iterator_category = base::iterator_category;
+	using difference_type   = base::difference_type;
 	using value_type        = fs::path;
 	using pointer           = const value_type *;
 	using reference         = const value_type &;
 
 	struct Sentinel {};
 
-	[[nodiscard]] EternalDirectoryIterator() noexcept = default;
-	[[nodiscard]] explicit EternalDirectoryIterator(fs::path Dir) noexcept
-	: Directory_{ move(Dir) }
+	[[nodiscard]] InfiniteDirectoryIterator() noexcept = default;
+	[[nodiscard]] explicit InfiniteDirectoryIterator(fs::path Dir) noexcept
+	: Directory_{ std::move(Dir) }
 	, Iter_{ restart(Directory_) }
 	, None_{ Iter_ == End_ } {}
 
-	[[nodiscard]] bool
-	operator==(const EternalDirectoryIterator & rhs) const noexcept {
+	[[nodiscard]] bool operator==(const InfiniteDirectoryIterator & rhs) const noexcept {
 		return Iter_ == rhs.Iter_;
 	}
-	[[nodiscard]] bool operator==(Sentinel) const noexcept {
-		return false;
-	}
+	[[nodiscard]] bool operator==(Sentinel) const noexcept { return false; }
 
 	[[nodiscard]] fs::path operator*() const noexcept {
-		if (None_)
-			return {};
-		return Iter_->path();
+		return None_ ? fs::path{} : Iter_->path();
 	}
 
-	[[maybe_unused]] EternalDirectoryIterator & operator++() {
-		error_code Error;
+	[[maybe_unused]] InfiniteDirectoryIterator & operator++() {
+		std::error_code Error;
 		if (Iter_ == End_ || Iter_.increment(Error) == End_)
 			Iter_ = restart(Directory_);
 		None_ = Error || Iter_ == End_;
 		return *this;
 	}
-	EternalDirectoryIterator & operator++(int);
+	InfiniteDirectoryIterator & operator++(int);
 
-	[[nodiscard]] friend inline EternalDirectoryIterator
-	begin(EternalDirectoryIterator it) {
-		return move(it);
+	[[nodiscard]] friend auto begin(InfiniteDirectoryIterator it) {
+		return std::move(it);
 	}
-	[[nodiscard]] friend inline Sentinel end(EternalDirectoryIterator) {
-		return {};
-	}
+	[[nodiscard]] friend auto end(InfiniteDirectoryIterator) { return Sentinel{}; }
 
 private:
 	static base restart(const fs::path & Directory) {
-		error_code Error;
-		return base{ Directory, fs::directory_options::skip_permission_denied,
-			         Error };
+		std::error_code Error;
+		return base{ Directory, fs::directory_options::skip_permission_denied, Error };
 	}
 
 	fs::path Directory_;
 	base Iter_;
 	base End_;
-	bool None_ = false;
+	bool None_ = true;
 };
-} // namespace videodecoder
 
-using videodecoder::EternalDirectoryIterator;
-
-template <>
-constexpr bool rgs::enable_borrowed_range<EternalDirectoryIterator> =
-    rgs::enable_borrowed_range<EternalDirectoryIterator::base>;
-
-static_assert(input_iterator<EternalDirectoryIterator>);
-static_assert(rgs::range<EternalDirectoryIterator>);
-static_assert(rgs::viewable_range<EternalDirectoryIterator>);
-static_assert(rgs::borrowed_range<EternalDirectoryIterator>);
-
-namespace videodecoder {
-// the setup stages, used in a view-pipeline
+static_assert(std::input_iterator<InfiniteDirectoryIterator>);
+static_assert(rgs::range<InfiniteDirectoryIterator>);
+static_assert(rgs::viewable_range<InfiniteDirectoryIterator>);
 
 static constexpr auto DetectStream  = -1;
 static constexpr auto FirstStream   = 0;
 static constexpr auto MainSubstream = 0;
 
-libav::File tryOpenFile(const fs::path & Path) {
+constexpr bool successful(int Code) {
+	return Code >= 0;
+}
+
+constexpr bool atEndOfFile(int Code) {
+	return Code == AVERROR_EOF;
+}
+
+auto acceptOnlyGIF(libav::File File) -> libav::File {
+	const AVCodec * pCodec;
+	if (av_find_best_stream(File, AVMEDIA_TYPE_VIDEO, DetectStream, -1, &pCodec, 0) !=
+	        FirstStream ||
+	    pCodec == nullptr || pCodec->id != AV_CODEC_ID_GIF)
+		File = {};
+	return std::move(File);
+}
+
+auto tryOpenAsGIF(fs::path Path) -> libav::File {
+	const auto Filename = caboodle::utf8Path(std::move(Path));
 	libav::File File;
-	if (!Path.empty() &&
-	    File.replace(caboodle::utf8Path(Path).c_str(), nullptr, nullptr) >= 0) {
-		const AVCodec * pCodec;
-		if ((av_find_best_stream(File, AVMEDIA_TYPE_VIDEO, DetectStream, -1,
-		                         &pCodec, 0) != FirstStream) ||
-		    pCodec == nullptr || pCodec->id != AV_CODEC_ID_GIF)
-			File = {};
+	if (not Path.empty() &&
+	    successful(File.emplace(Filename.c_str(), nullptr, nullptr))) {
+		File = acceptOnlyGIF(std::move(File));
 	}
 	return File;
 }
 
-tuple<libav::File, libav::Codec> tryOpenDecoder(libav::File File) {
-	if (File.empty())
+auto tryOpenVideoDecoder(libav::File File) -> std::tuple<libav::File, libav::Codec> {
+	if (not have(File))
 		return {};
 
 	const AVCodec * pCodec;
 	avformat_find_stream_info(File, nullptr);
 	av_find_best_stream(File, AVMEDIA_TYPE_VIDEO, FirstStream, -1, &pCodec, 0);
-	if (File->duration > 0) {
-		if (libav::Codec Decoder(pCodec); Decoder) {
-			avcodec_parameters_to_context(Decoder,
-			                              File->streams[FirstStream]->codecpar);
-			if (avcodec_open2(Decoder, pCodec, nullptr) >= 0)
-				return make_tuple(move(File), move(Decoder));
-		}
+	if (File->duration <= 0)
+		return {}; // refuse still images
+
+	libav::Codec Decoder(pCodec);
+	if (have(Decoder)) {
+		avcodec_parameters_to_context(Decoder, File->streams[FirstStream]->codecpar);
+		if (successful(avcodec_open2(Decoder, pCodec, nullptr)))
+			return { std::move(File), std::move(Decoder) };
 	}
 	return {};
 }
 
-microseconds getTickDuration(const libav::File & File) {
-	static_assert(is_same_v<microseconds::period, ratio<1, AV_TIME_BASE>>);
+using std::chrono::microseconds;
+
+static constexpr bool isSameTimeUnit =
+    std::is_same_v<microseconds::period, std::ratio<1, AV_TIME_BASE>>;
+static_assert(isSameTimeUnit, "libav uses different time units");
+
+auto getTickDuration(const libav::File & File) {
 	return microseconds{ av_rescale_q(1, File->streams[FirstStream]->time_base,
 		                              { 1, AV_TIME_BASE }) };
 }
 
-video::Frame makeVideoFrame(const libav::Frame & Frame, int FrameNumber,
-                            microseconds Tick) {
-	video::FrameHeader Header = { .Width_     = Frame->width,
-		                          .Height_    = Frame->height,
-		                          .LinePitch_ = Frame->linesize[MainSubstream],
-		                          .Format_    = video::fromLibav(Frame->format),
-		                          .Sequence_  = FrameNumber,
-		                          .Timestamp_ = Tick * Frame->pts };
-	return { Header,
-		     { bit_cast<const std::byte *>(Frame->data[MainSubstream]),
-		       Header.size() } };
+constexpr auto makeVideoFrame(const libav::Frame & Frame, int FrameNumber,
+                              microseconds TickDuration) {
+	FrameHeader Header = { .Width_     = Frame->width,
+		                   .Height_    = Frame->height,
+		                   .LinePitch_ = Frame->linesize[MainSubstream],
+		                   .Format_    = std::to_underlying(fromLibav(Frame->format)),
+		                   .Sequence_  = FrameNumber,
+		                   .Timestamp_ = TickDuration * Frame->pts };
+
+	tPixels Pixels = { std::bit_cast<const std::byte *>(Frame->data[MainSubstream]),
+		               Header.SizePixels() };
+	return video::Frame{ Header, Pixels };
 }
 
-generator<video::Frame> decodeFrames(libav::File File, libav::Codec Decoder) {
+auto decodeFrames(libav::File File, libav::Codec Decoder)
+    -> std::generator<video::Frame> {
+	const auto TickDuration = getTickDuration(File);
 	libav::Packet Packet;
 	libav::Frame Frame;
-	const auto Tick = getTickDuration(File);
 
-	while (av_read_frame(File, Packet) >= 0) {
-		const auto PGuard = Packet.dropReference();
+	int Result = 0;
+	while (not atEndOfFile(Result) && successful(av_read_frame(File, Packet))) {
+		const auto PacketReferenceGuard = Packet.dropReference();
 		if (Packet->stream_index != FirstStream)
 			continue;
-		for (auto rc = avcodec_send_packet(Decoder, Packet); rc >= 0;) {
-			rc                = avcodec_receive_frame(Decoder, Frame);
-			const auto FGuard = Frame.dropReference();
-			if (rc >= 0)
-				co_yield makeVideoFrame(Frame, Decoder->frame_number, Tick);
-			else if (rc == AVERROR_EOF)
-				co_return;
+		Result = avcodec_send_packet(Decoder, Packet);
+		while (successful(Result)) {
+			Result = avcodec_receive_frame(Decoder, Frame);
+			if (successful(Result))
+				co_yield makeVideoFrame(Frame, Decoder->frame_number, TickDuration);
 		}
 	}
 }
 
-auto hasExtension(string_view Extension) {
+// "borrowing" is safe due to 'consteval' 😊
+consteval auto hasExtension(std::string_view Extension) {
 	return [=](const fs::path & p) {
 		return p.empty() || p.extension() == Extension;
 	};
 }
 
-generator<video::Frame> makeFrames(fs::path Directory) {
-	const auto EndlessStreamOfPaths = EternalDirectoryIterator(move(Directory));
-	// clang-format off
-	auto MisEnPlace = EndlessStreamOfPaths
-		            | vws::filter(hasExtension(".gif"))
-		            | vws::transform(tryOpenFile)
-		            | vws::transform(tryOpenDecoder)
-		            ;
-	// clang-format on
+using namespace std::chrono_literals;
 
-	for (auto [File, Decoder] : MisEnPlace) {
-		if (Decoder) {
-			println("decoding <{}>", File->url);
+// clang-format off
+auto makeFrames(fs::path Directory) -> std::generator<video::Frame> {
+	auto EndlessStreamOfPaths = InfiniteDirectoryIterator(std::move(Directory));
+	auto PreprocessedMediaFiles = EndlessStreamOfPaths
+		                        | vws::filter(hasExtension(".gif"))
+		                        | vws::transform(tryOpenAsGIF)
+		                        | vws::transform(tryOpenVideoDecoder)
+		                        ;
+	for (auto [File, Decoder] : PreprocessedMediaFiles) {
+		if (have(Decoder)) {
+			std::println("decoding <{}>", File->url);
 			co_yield rgs::elements_of(
 			    decodeFrames(std::move(File), std::move(Decoder)));
 		} else {
-			co_yield video::makeFiller(100ms);
+			co_yield video::makeFillerFrame(100ms);
 		}
 	}
 }
-} // namespace videodecoder
+} // namespace video
