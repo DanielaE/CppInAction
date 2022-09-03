@@ -56,7 +56,7 @@ void FancyWindow::present(video::tPixels Pixels) {
 	SDL_RenderPresent(Renderer_);
 }
 
-bool processEvents() {
+bool isAlive() {
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
 		if (event.type == SDL_QUIT)

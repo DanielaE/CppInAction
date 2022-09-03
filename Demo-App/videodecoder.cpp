@@ -49,18 +49,19 @@ struct InfiniteDirectoryIterator {
 	using pointer           = const value_type *;
 	using reference         = const value_type &;
 
-	struct Sentinel {};
-
 	[[nodiscard]] InfiniteDirectoryIterator() noexcept = default;
 	[[nodiscard]] explicit InfiniteDirectoryIterator(fs::path Dir) noexcept
 	: Directory_{ std::move(Dir) }
 	, Iter_{ restart(Directory_) }
 	, None_{ Iter_ == End_ } {}
 
-	[[nodiscard]] bool operator==(const InfiniteDirectoryIterator & rhs) const noexcept {
-		return Iter_ == rhs.Iter_;
-	}
+	struct Sentinel {};
 	[[nodiscard]] bool operator==(Sentinel) const noexcept { return false; }
+
+	[[nodiscard]] friend auto begin(InfiniteDirectoryIterator it) {
+		return std::move(it);
+	}
+	[[nodiscard]] friend auto end(InfiniteDirectoryIterator) -> Sentinel { return {}; }
 
 	[[nodiscard]] fs::path operator*() const noexcept {
 		return None_ ? fs::path{} : Iter_->path();
@@ -68,17 +69,12 @@ struct InfiniteDirectoryIterator {
 
 	[[maybe_unused]] InfiniteDirectoryIterator & operator++() {
 		std::error_code Error;
-		if (Iter_ == End_ || Iter_.increment(Error) == End_)
+		if (Iter_ == End_ or Iter_.increment(Error) == End_)
 			Iter_ = restart(Directory_);
-		None_ = Error || Iter_ == End_;
+		None_ = Error or Iter_ == End_;
 		return *this;
 	}
 	InfiniteDirectoryIterator & operator++(int);
-
-	[[nodiscard]] friend auto begin(InfiniteDirectoryIterator it) {
-		return std::move(it);
-	}
-	[[nodiscard]] friend auto end(InfiniteDirectoryIterator) { return Sentinel{}; }
 
 private:
 	static base restart(const fs::path & Directory) {
@@ -111,8 +107,8 @@ constexpr bool atEndOfFile(int Code) {
 auto acceptOnlyGIF(libav::File File) -> libav::File {
 	const AVCodec * pCodec;
 	if (av_find_best_stream(File, AVMEDIA_TYPE_VIDEO, DetectStream, -1, &pCodec, 0) !=
-	        FirstStream ||
-	    pCodec == nullptr || pCodec->id != AV_CODEC_ID_GIF)
+	        FirstStream or
+	    pCodec == nullptr or pCodec->id != AV_CODEC_ID_GIF)
 		File = {};
 	return std::move(File);
 }
@@ -120,7 +116,7 @@ auto acceptOnlyGIF(libav::File File) -> libav::File {
 auto tryOpenAsGIF(fs::path Path) -> libav::File {
 	const auto Filename = caboodle::utf8Path(std::move(Path));
 	libav::File File;
-	if (not Path.empty() &&
+	if (not Path.empty() and
 	    successful(File.emplace(Filename.c_str(), nullptr, nullptr))) {
 		File = acceptOnlyGIF(std::move(File));
 	}
@@ -178,7 +174,7 @@ auto decodeFrames(libav::File File, libav::Codec Decoder)
 	libav::Frame Frame;
 
 	int Result = 0;
-	while (not atEndOfFile(Result) && successful(av_read_frame(File, Packet))) {
+	while (not atEndOfFile(Result) and successful(av_read_frame(File, Packet))) {
 		const auto PacketReferenceGuard = Packet.dropReference();
 		if (Packet->stream_index != FirstStream)
 			continue;
@@ -194,7 +190,7 @@ auto decodeFrames(libav::File File, libav::Codec Decoder)
 // "borrowing" is safe due to 'consteval' 😊
 consteval auto hasExtension(std::string_view Extension) {
 	return [=](const fs::path & p) {
-		return p.empty() || p.extension() == Extension;
+		return p.empty() or p.extension() == Extension;
 	};
 }
 

@@ -67,7 +67,7 @@ static constexpr auto SendTimeBudget = 100ms;
 [[nodiscard]] auto streamVideos(net::tSocket Socket, fs::path Source)
     -> asio::awaitable<void> {
 	net::tTimer Timer(Socket.get_executor());
-	const auto Sentinel = executor::guard(Socket, Timer);
+	const auto WatchDog = executor::abort(Socket, Timer);
 
 	auto DueTime = makeStartingGate(Timer);
 	for (const auto Frame : video::makeFrames(std::move(Source))) {
@@ -86,11 +86,11 @@ static constexpr auto SendTimeBudget = 100ms;
 
 [[nodiscard]] auto acceptConnections(net::tAcceptor Acceptor, const fs::path Source)
     -> asio::awaitable<void> {
-	const auto Sentinel = executor::guard(Acceptor);
+	const auto WatchDog = executor::abort(Acceptor);
 
 	while (Acceptor.is_open()) {
 		auto [Error, Socket] = co_await Acceptor.async_accept();
-		if (not Error && Socket.is_open())
+		if (not Error and Socket.is_open())
 			executor::commission(Acceptor.get_executor(), streamVideos, std::move(Socket),
 			                     Source);
 	}
@@ -127,7 +127,7 @@ static constexpr auto ConnectTimeBudget = 2s;
 // a memory resource that owns at least as much memory as it was ever asked to lend out.
 
 struct AdaptiveMemoryResource {
-	[[nodiscard]] net::tByteSpan lend(std::size_t Size) noexcept {
+	[[nodiscard]] auto lend(std::size_t Size) -> net::tByteSpan {
 		if (Size > Capacity_) {
 			Capacity_ = Size;
 			Bytes_    = std::make_unique_for_overwrite<std::byte[]>(Capacity_);
@@ -171,7 +171,7 @@ private:
 
 [[nodiscard]] auto rollVideos(net::tSocket Socket, net::tTimer Timer,
                               gui::FancyWindow Window) -> asio::awaitable<void> {
-	const auto Sentinel = executor::guard(Socket, Timer);
+	const auto WatchDog = executor::abort(Socket, Timer);
 	AdaptiveMemoryResource PixelMemory;
 
 	while (Socket.is_open()) {
@@ -205,7 +205,7 @@ private:
 		co_await rollVideos(std::move(Socket).value(), std::move(Timer),
 		                    std::move(Window));
 	}
-	executor::StopAssetOf(Context).stop();
+	executor::StopAssetOf(Context).request_stop();
 }
 } // namespace client
 
@@ -218,10 +218,10 @@ static constexpr auto EventPollInterval = 50ms;
 
 [[nodiscard]] auto fromTerminal(asio::io_context & Context) -> asio::awaitable<void> {
 	asio::signal_set Signals(Context, SIGINT, SIGTERM);
-	const auto Sentinel = executor::guard(Signals);
+	const auto WatchDog = executor::abort(Signals);
 
 	co_await Signals.async_wait(asio::use_awaitable);
-	executor::StopAssetOf(Context).stop();
+	executor::StopAssetOf(Context).request_stop();
 }
 
 // the GUI interaction is a separate coroutine.
@@ -229,14 +229,12 @@ static constexpr auto EventPollInterval = 50ms;
 
 [[nodiscard]] auto fromGUI(asio::io_context & Context) -> asio::awaitable<void> {
 	net::tTimer Timer(Context);
-	auto Stop               = executor::StopAssetOf(Context);
-	const auto BreakCircuit = executor::breakOn(Stop, Timer);
+	const auto WatchDog = executor::abort(Timer);
 
-	while (not Stop && gui::processEvents()) {
+	do {
 		Timer.expires_after(EventPollInterval);
-		co_await Timer.async_wait();
-	}
-	Stop.stop();
+	} while (co_await net::expired(Timer) and gui::isAlive());
+	executor::StopAssetOf(Context).request_stop();
 }
 
 } // namespace handleEvents

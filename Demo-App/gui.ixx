@@ -36,6 +36,6 @@ private:
 	int SourceFormat_;
 };
 
-bool processEvents();
+bool isAlive();
 
 } // namespace gui

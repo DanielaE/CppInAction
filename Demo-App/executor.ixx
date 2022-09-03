@@ -12,30 +12,6 @@ import asio; // precompiled module, taken from BMI cache
 // plus P0958, P1322, P1943, P2444
 // plus executors as decribed in P0443, P1348, and P1393
 
-export namespace Off {
-struct Indicator : std::stop_token {
-	using base = std::stop_token;
-
-	[[nodiscard]] Indicator(base Stop) noexcept
-	: base{ std::move(Stop) } {}
-
-	explicit operator bool() const noexcept { return stop_requested(); }
-};
-
-struct Switch : std::stop_source {
-	using base = std::stop_source;
-
-	using base::base;
-	[[nodiscard]] Switch(base Stop) noexcept
-	: base{ std::move(Stop) } {}
-
-	void stop() noexcept { request_stop(); }
-
-	explicit operator bool() const noexcept { return stop_requested(); }
-	[[nodiscard]] operator Indicator() const noexcept { return get_token(); }
-};
-} // namespace Off
-
 namespace executor {
 template <typename T>
 constexpr inline bool Unfortunate = false;
@@ -43,16 +19,16 @@ template <typename T>
 constexpr inline bool isExecutionContext = std::is_base_of_v<asio::execution_context, T>;
 template <typename T>
 constexpr inline bool isExecutor =
-    asio::is_executor<T>::value || asio::execution::is_executor<T>::value;
+    asio::is_executor<T>::value or asio::execution::is_executor<T>::value;
 template <typename T>
 constexpr inline bool hasExecutor = requires(T t) {
 	{ t.get_executor() };
 };
 
-auto onException(Off::Switch Stop) {
+auto onException(std::stop_source Stop) {
 	return [Stop_ = std::move(Stop)](std::exception_ptr pEx) mutable {
 		if (pEx)
-			Stop_.stop();
+			Stop_.request_stop();
 	};
 }
 
@@ -63,25 +39,27 @@ struct StopService : ServiceBase {
 	static asio::io_context::id id;
 
 	using ServiceBase::ServiceBase;
-	StopService(asio::execution_context & Ctx, Off::Switch Stop)
+	StopService(asio::execution_context & Ctx, std::stop_source Stop)
 	: ServiceBase(Ctx)
 	, Stop_(std::move(Stop)) {}
 
-	operator Off::Switch() const { return Stop_; }
+	std::stop_source get() const { return Stop_; }
+	bool isStopped() const { return Stop_.stop_requested(); }
+	void requestStop() { Stop_.request_stop(); }
 
 private:
 	void shutdown() noexcept override {}
-	Off::Switch Stop_;
+	std::stop_source Stop_;
 };
 
 void addStopService(asio::execution_context & Executor, std::stop_source & Stop) {
 	asio::make_service<StopService>(Executor, Stop);
 }
 
-// precondition: 'Context' owns a 'StopService'
+// precondition: 'Context' provides a 'StopService'
 
-Off::Switch getStop(asio::execution_context & Context) {
-	return asio::use_service<StopService>(Context);
+std::stop_source getStop(asio::execution_context & Context) {
+	return asio::use_service<StopService>(Context).get();
 }
 
 template <typename T>
@@ -96,7 +74,7 @@ asio::execution_context & getContext(T & Object) {
 		static_assert(Unfortunate<T>, "Please give me an execution context");
 }
 
-// return the off-switch that is 'wired' to the given 'Object'
+// return the stop_source that is 'wired' to the given 'Object'
 
 export [[nodiscard]] auto StopAssetOf(auto & Object) {
 	return executor::getStop(executor::getContext(Object));
@@ -120,8 +98,8 @@ struct isCallable {
 	static consteval ReturnType * returned() { return nullptr; }
 
 	static constexpr bool returnsAwaitable = isAwaitable(returned());
-	static constexpr bool synchronously    = invocable && not returnsAwaitable;
-	static constexpr bool asynchronously   = invocable && returnsAwaitable;
+	static constexpr bool synchronously    = invocable and not returnsAwaitable;
+	static constexpr bool asynchronously   = invocable and returnsAwaitable;
 };
 
 // initiate independent asynchronous execution of a piece of work on a given executor.
@@ -149,10 +127,10 @@ export [[nodiscard]] auto makeScheduler(asio::io_context & Context,
 	executor::addStopService(Context, Stop);
 
 	return [&]<typename Func, typename... Ts>(Func && Work, Ts &&... Args) {
-		using toBeCalled = isCallable<Func, asio::io_context &, Ts...>;
-		if constexpr (toBeCalled::asynchronously)
+		using mustBeCalled = isCallable<Func, asio::io_context &, Ts...>;
+		if constexpr (mustBeCalled::asynchronously)
 			executor::commission(Context, WORK);
-		else if constexpr (toBeCalled::synchronously)
+		else if constexpr (mustBeCalled::synchronously)
 			return std::invoke(WORK);
 		else
 			static_assert(Unfortunate<Func>,
@@ -160,35 +138,29 @@ export [[nodiscard]] auto makeScheduler(asio::io_context & Context,
 	};
 }
 
-// close a given object depending on its capabilities.
-// the close operation is customizable to cater for more involved closing requirements.
+// abort operation of a given object depending on its capabilities.
+// the close() operation is customizable to cater for more involved closing requirements.
 
 #define THIS_WORKS(x) (requires(T Object) { { x }; }) x;
 
 // clang-format off
 template <typename T>
-void _close(T & Object) {
+void _abort(T & Object) {
 	if      constexpr THIS_WORKS( close(Object)   )
 	else if constexpr THIS_WORKS( Object.close()  )
 	else if constexpr THIS_WORKS( Object.cancel() )
 	else
-		static_assert(Unfortunate<T>, "Please tell me how to close this 'Object'");
+		static_assert(Unfortunate<T>, "Please tell me how to abort on this 'Object'");
 }
 // clang-format on
 
-// create an object that is wired up to close all given objects
+// create an object that is wired up to abort the operation of all given objects
 // whenever a stop is indicated.
 
-export [[nodiscard]] auto breakOn(Off::Indicator Stop, auto & Object,
-                                  auto &... moreObjects) {
-	using executor::_close;
-	return std::stop_callback{ std::move(Stop), [&] {
-		                          (_close(Object), ..., _close(moreObjects));
+export [[nodiscard]] auto abort(auto & Object, auto &... moreObjects) {
+	return std::stop_callback{ StopAssetOf(Object).get_token(), [&] {
+		                          (_abort(Object), ..., _abort(moreObjects));
 		                      } };
-}
-
-export [[nodiscard]] auto guard(auto & Object, auto &... moreObjects) {
-	return breakOn(StopAssetOf(Object), Object, moreObjects...);
 }
 
 } // namespace executor

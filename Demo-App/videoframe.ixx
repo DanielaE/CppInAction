@@ -4,7 +4,11 @@ import std;
 import libav; // precompiled module, taken from BMI cache
 
 export namespace video {
-enum class PixelFormat : unsigned char { invalid, RGBA, BGRA };
+enum class PixelFormat : unsigned char { invalid, RGBA, BGRA, _largest = BGRA };
+
+consteval auto FormatBits() {
+	return std::bit_width(std::to_underlying(PixelFormat::_largest));
+}
 
 constexpr PixelFormat fromLibav(int Format) {
 	using enum PixelFormat;
@@ -15,16 +19,18 @@ constexpr PixelFormat fromLibav(int Format) {
 	}
 }
 
-struct FrameHeader {
-	static constexpr auto SizeBytes = 16u;
+namespace chrono = std::chrono;
 
-	using µSeconds = std::chrono::duration<unsigned, std::micro>;
+struct FrameHeader {
+	static constexpr auto SizeBytes = 12u;
+
+	using µSeconds = chrono::duration<unsigned, std::micro>;
 
 	int Width_ : 16;
 	int Height_ : 16;
 	int LinePitch_ : 16;
-	int Format_ : 8;
-	int Sequence_;
+	int Format_ : FormatBits();
+	int Sequence_ : 16 - FormatBits();
 	µSeconds Timestamp_;
 
 	[[nodiscard]] constexpr size_t SizePixels() const noexcept {
@@ -32,10 +38,10 @@ struct FrameHeader {
 	}
 	constexpr bool hasNoPixels() const noexcept { return SizePixels() == 0; }
 	constexpr bool isFiller() const noexcept {
-		return Sequence_ == 0 && Timestamp_.count() > 0;
+		return Sequence_ == 0 and Timestamp_.count() > 0;
 	}
 	constexpr bool isNoFrame() const noexcept {
-		return Sequence_ == 0 && Timestamp_.count() == 0;
+		return Sequence_ == 0 and Timestamp_.count() <= 0;
 	}
 	constexpr bool isFirstFrame() const noexcept { return Sequence_ <= 1; }
 };
@@ -54,11 +60,11 @@ struct Frame {
 	}
 };
 
-constexpr video::Frame makeFillerFrame(std::chrono::milliseconds Duration) {
-	FrameHeader Header{ 0 };
-	Header.Timestamp_ = std::chrono::duration_cast<FrameHeader::µSeconds>(Duration);
-	return { Header, {} };
-}
-
 constexpr inline video::Frame noFrame{ 0 };
+
+constexpr video::Frame makeFillerFrame(chrono::milliseconds Duration) {
+	auto Filler               = noFrame;
+	Filler.Header_.Timestamp_ = chrono::duration_cast<FrameHeader::µSeconds>(Duration);
+	return Filler;
+}
 } // namespace video

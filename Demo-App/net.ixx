@@ -50,35 +50,34 @@ export {
 // as simply as possible to scare away no one. No TMP required here!
 
 template <typename R, typename... Ts>
-constexpr auto _map(tResult<Ts...> && tpl) -> net::tExpected<R> {
-	const auto & Error = std::get<std::error_code>(tpl);
+constexpr auto _map(tResult<Ts...> && Tuple) -> net::tExpected<R> {
+	const auto & Error = std::get<std::error_code>(Tuple);
 	if constexpr (sizeof...(Ts) == 0)
 		return std::unexpected{ Error };
 	else if (Error)
 		return std::unexpected{ Error };
 	else
-		return std::get<R>(std::move(tpl));
+		return std::get<R>(std::move(Tuple));
 }
 
 export {
 	using aex::awaitable_operators::operator||;
 
 	template <typename... Ts, typename... Us>
-	constexpr auto expect(std::variant<tResult<Ts...>, tResult<Us...>> && var) {
+	constexpr auto flatten(std::variant<tResult<Ts...>, tResult<Us...>> && Variant) {
 		using net::_map;
 		using tReturn = std::type_identity_t<Ts..., Us...>;
 		return std::visit(
-		    [](auto && tpl) -> net::tExpected<tReturn> {
-			    return _map<tReturn>(std::move(tpl));
+		    [](auto && Tuple) {
+			    return _map<tReturn>(std::move(Tuple));
 		    },
-		    std::move(var));
+		    std::move(Variant));
 	}
 
 	template <typename Out, typename In>
-	auto replace(const net::tExpected<In> & Value, Out && Replacement)
-	    ->net::tExpected<Out> {
-		if (not Value)
-			return std::unexpected{ Value.error() };
+	auto replace(net::tExpected<In> && Input, Out && Replacement)->net::tExpected<Out> {
+		if (not Input.has_value())
+			return std::unexpected{ std::move(Input).error() };
 		return std::forward<Out>(Replacement);
 	}
 
@@ -94,6 +93,7 @@ export {
 	    -> asio::awaitable<tExpectSize>;
 	auto connectTo(tEndpoints EndpointsToTry, tTimer & Timer)
 	    -> asio::awaitable<tExpectSocket>;
+	auto expired(tTimer & Timer) noexcept -> asio::awaitable<bool>;
 
 	void close(tSocket & Socket) noexcept;
 	auto resolveHostEndpoints(std::string_view HostName, uint16_t Port,

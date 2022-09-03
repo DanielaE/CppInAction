@@ -11,21 +11,26 @@ using namespace asio;
 // precondition: not Data.empty()
 auto sendTo(tSocket & Socket, tTimer & Timer, tConstBuffers Data)
     -> awaitable<tExpectSize> {
-	co_return expect(co_await (async_write(Socket, Data) || Timer.async_wait()));
+	co_return flatten(co_await (async_write(Socket, Data) || Timer.async_wait()));
 }
 
 // precondition: not Space.empty()
 auto receiveFrom(tSocket & Socket, tTimer & Timer, tByteSpan Space)
     -> awaitable<tExpectSize> {
-	co_return expect(co_await (async_read(Socket, buffer(Space)) || Timer.async_wait()));
+	co_return flatten(co_await (async_read(Socket, buffer(Space)) || Timer.async_wait()));
 }
 
 // precondition: not Endpoints.empty()
 auto connectTo(tEndpoints Endpoints, tTimer & Timer) -> awaitable<tExpectSocket> {
 	tSocket Socket(Timer.get_executor());
 	co_return replace(
-	    expect(co_await (async_connect(Socket, Endpoints) || Timer.async_wait())),
+	    flatten(co_await (async_connect(Socket, Endpoints) || Timer.async_wait())),
 	    std::move(Socket));
+}
+
+auto expired(tTimer & Timer) noexcept -> asio::awaitable<bool> {
+	const auto [Error] = co_await Timer.async_wait();
+	co_return not Error;
 }
 
 void close(tSocket & Socket) noexcept {
