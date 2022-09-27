@@ -10,8 +10,8 @@ x64
 /libavfilter
 /libavutil
 /libav
-/msvc-stl-include
-/SDL2*
+/msvc-stl
+/SDL*
 /lib*
 /*test
 /bin*

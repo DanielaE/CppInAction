@@ -9,7 +9,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libav", "libav\libav.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "boost.program_options", "boost.program_options\boost.program_options.vcxproj", "{B02D2540-5B5F-4348-BE2A-D280996ECD09}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sdl", "SDL2-2.0.22\module\sdl2.vcxproj", "{1569001E-8080-4A44-93FF-CA44C15545C6}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sdl", "SDL\module\sdl2.vcxproj", "{1569001E-8080-4A44-93FF-CA44C15545C6}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "prebuilt", "prebuilt", "{074EACD6-9A2F-4FEF-B193-9998B0136AB5}"
 EndProject
