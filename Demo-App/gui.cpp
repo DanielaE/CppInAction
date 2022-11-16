@@ -2,25 +2,47 @@
 
 namespace gui {
 
+static const auto initializedSDL    = SDL_Init(SDL_INIT_VIDEO);
 static constexpr auto TextureFormat = SDL_PIXELFORMAT_ARGB8888;
 
-FancyWindow::FancyWindow(width Width, height Height) {
-	SDL_Init(SDL_INIT_VIDEO);
+static constexpr bool successful(int Code) {
+	return Code == 0;
+}
+
+static auto centeredBox(tDimensions Dimensions,
+                        int Monitor = SDL_GetNumVideoDisplays()) noexcept {
+	struct {
+		int x = SDL_WINDOWPOS_CENTERED;
+		int y = SDL_WINDOWPOS_CENTERED;
+		int Width;
+		int Height;
+	} Box{ .Width = Dimensions.Width, .Height = Dimensions.Height };
+
+	if (SDL_Rect Display;
+	    Monitor > 0 and successful(SDL_GetDisplayBounds(Monitor - 1, &Display))) {
+		Box.Width  = std::min(Display.w, Box.Width);
+		Box.Height = std::min(Display.h, Box.Height);
+		Box.x      = Display.x + (Display.w - Box.Width) / 2;
+		Box.y      = Display.y + (Display.h - Box.Height) / 2;
+	}
+	return Box;
+}
+
+FancyWindow::FancyWindow(tDimensions Dimensions) noexcept {
+	const auto Viewport = centeredBox(Dimensions);
+
 	Window_   = { "Look at me!",
-		          SDL_WINDOWPOS_CENTERED,
-		          SDL_WINDOWPOS_CENTERED,
-		          Width,
-		          Height,
+				  Viewport.x, Viewport.y, Viewport.Width, Viewport.Height,
 		          SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN };
 	Renderer_ = { Window_, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC };
 
-	SDL_SetWindowMinimumSize(Window_, Width, Height);
-	SDL_RenderSetLogicalSize(Renderer_, Width, Height);
+	SDL_SetWindowMinimumSize(Window_, Viewport.Width, Viewport.Height);
+	SDL_RenderSetLogicalSize(Renderer_, Viewport.Width, Viewport.Height);
 	SDL_RenderSetIntegerScale(Renderer_, SDL_TRUE);
 	SDL_SetRenderDrawColor(Renderer_, 240, 240, 240, 240);
 }
 
-void FancyWindow::updateFrom(const video::FrameHeader & Header) {
+void FancyWindow::updateFrom(const video::FrameHeader & Header) noexcept {
 	if (not Header.isFirstFrame())
 		return;
 
@@ -42,12 +64,12 @@ void FancyWindow::updateFrom(const video::FrameHeader & Header) {
 	}
 }
 
-void FancyWindow::present(video::tPixels Pixels) {
+void FancyWindow::present(video::tPixels Pixels) noexcept {
 	void * TextureData;
 	int TexturePitch;
 
 	SDL_RenderClear(Renderer_);
-	if (0 == SDL_LockTexture(Texture_, nullptr, &TextureData, &TexturePitch)) {
+	if (successful(SDL_LockTexture(Texture_, nullptr, &TextureData, &TexturePitch))) {
 		SDL_ConvertPixels(Width_, Height_, SourceFormat_, Pixels.data(), PixelsPitch_,
 		                  TextureFormat, TextureData, TexturePitch);
 		SDL_UnlockTexture(Texture_);
@@ -56,7 +78,7 @@ void FancyWindow::present(video::tPixels Pixels) {
 	SDL_RenderPresent(Renderer_);
 }
 
-bool isAlive() {
+bool isAlive() noexcept {
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
 		if (event.type == SDL_QUIT)

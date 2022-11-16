@@ -38,6 +38,8 @@ export {
 	using tSendBuffers  = std::array<asio::const_buffer, N>;
 	using tConstBuffers = std::span<asio::const_buffer>;
 
+	enum tPort : uint16_t {};
+
 	// the network layer uses std::expected<T, error_code> as return types
 
 	template <typename T>
@@ -81,7 +83,7 @@ export {
 		return std::forward<Out>(Replacement);
 	}
 
-	constexpr auto asBytes(const auto & Object) noexcept->asio::const_buffer {
+	constexpr auto asBytes(const auto & Object) noexcept -> asio::const_buffer {
 		const auto Bytes = std::as_bytes(std::span{ &Object, 1 });
 		return { Bytes.data(), Bytes.size() };
 	}
@@ -96,7 +98,7 @@ export {
 	auto expired(tTimer & Timer) noexcept -> asio::awaitable<bool>;
 
 	void close(tSocket & Socket) noexcept;
-	auto resolveHostEndpoints(std::string_view HostName, uint16_t Port,
+	auto resolveHostEndpoints(std::string_view HostName, tPort Port,
 	                          std::chrono::milliseconds TimeBudget)
 	    -> std::vector<tEndpoint>;
 	}

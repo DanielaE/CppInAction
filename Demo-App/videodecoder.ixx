@@ -1,7 +1,6 @@
 export module video:decoder;
 import std;
 
-import generator;
 import :frame;
 
 namespace video {

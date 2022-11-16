@@ -14,17 +14,19 @@ using Texture  = stdex::c_resource<SDL_Texture, SDL_CreateTexture, SDL_DestroyTe
 } // namespace sdl
 
 export namespace gui {
-enum width : int {};
-enum height : int {};
+struct tDimensions {
+	uint16_t Width;
+	uint16_t Height;
+};
 
 // the most minimal GUI
 // capable of showing a frame with some decor for user interaction
 // renders the video frames
 struct FancyWindow {
-	FancyWindow(width Width, height Height);
+	explicit FancyWindow(tDimensions) noexcept;
 
-	void updateFrom(const video::FrameHeader & Header);
-	void present(video::tPixels Pixels);
+	void updateFrom(const video::FrameHeader & Header) noexcept;
+	void present(video::tPixels Pixels) noexcept;
 
 private:
 	sdl::Window Window_;
@@ -36,6 +38,6 @@ private:
 	int SourceFormat_;
 };
 
-bool isAlive();
+bool isAlive() noexcept;
 
 } // namespace gui

@@ -28,14 +28,16 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ItemGroup>
+    <ClCompile Include="client.ixx" />
+    <ClCompile Include="events.ixx" />
     <ClCompile Include="gui.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="caboodle.ixx" />
     <ClCompile Include="executor.ixx" />
     <ClCompile Include="net.cpp" />
     <ClCompile Include="net.ixx" />
-    <ClCompile Include="generator.ixx" />
     <ClCompile Include="gui.ixx" />
+    <ClCompile Include="server.ixx" />
     <ClCompile Include="video.ixx" />
     <ClCompile Include="videoframe.ixx" />
     <ClCompile Include="videodecoder.ixx" />
@@ -46,9 +48,6 @@
     <ClCompile Include="c_resource.hpp">
       <CompileAs>CompileAsHeaderUnit</CompileAs>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="generator.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="Demo-App.xml" />

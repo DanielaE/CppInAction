@@ -3,7 +3,6 @@ import std;
 
 import :frame;
 import "c_resource.hpp";
-import generator;
 import the.whole.caboodle;
 import libav; // precompiled module, taken from BMI cache
 
@@ -41,56 +40,18 @@ namespace video {
 // iteration step.
 // the returned paths are empty if there are no directory contents.
 
-struct InfiniteDirectoryIterator {
-	using base              = fs::directory_iterator;
-	using iterator_category = base::iterator_category;
-	using difference_type   = base::difference_type;
-	using value_type        = fs::path;
-	using pointer           = const value_type *;
-	using reference         = const value_type &;
-
-	[[nodiscard]] InfiniteDirectoryIterator() noexcept = default;
-	[[nodiscard]] explicit InfiniteDirectoryIterator(fs::path Dir) noexcept
-	: Directory_{ std::move(Dir) }
-	, Iter_{ restart(Directory_) }
-	, None_{ Iter_ == End_ } {}
-
-	struct Sentinel {};
-	[[nodiscard]] bool operator==(Sentinel) const noexcept { return false; }
-
-	[[nodiscard]] friend auto begin(InfiniteDirectoryIterator it) {
-		return std::move(it);
+auto InfinitePathSource(fs::path Directory) -> std::generator<fs::path> {
+	using fs::directory_options::skip_permission_denied;
+	std::error_code Error;
+	for (fs::directory_iterator atEnd{}, Iterator = atEnd; true;) {
+		if (Iterator == atEnd or Iterator.increment(Error) == atEnd)
+			Iterator = fs::directory_iterator{ Directory, skip_permission_denied, Error };
+		co_yield Error or Iterator == atEnd ? fs::path{} : Iterator->path();
 	}
-	[[nodiscard]] friend auto end(InfiniteDirectoryIterator) -> Sentinel { return {}; }
+}
 
-	[[nodiscard]] fs::path operator*() const noexcept {
-		return None_ ? fs::path{} : Iter_->path();
-	}
-
-	[[maybe_unused]] InfiniteDirectoryIterator & operator++() {
-		std::error_code Error;
-		if (Iter_ == End_ or Iter_.increment(Error) == End_)
-			Iter_ = restart(Directory_);
-		None_ = Error or Iter_ == End_;
-		return *this;
-	}
-	InfiniteDirectoryIterator & operator++(int);
-
-private:
-	static base restart(const fs::path & Directory) {
-		std::error_code Error;
-		return base{ Directory, fs::directory_options::skip_permission_denied, Error };
-	}
-
-	fs::path Directory_;
-	base Iter_;
-	base End_;
-	bool None_ = true;
-};
-
-static_assert(std::input_iterator<InfiniteDirectoryIterator>);
-static_assert(rgs::range<InfiniteDirectoryIterator>);
-static_assert(rgs::viewable_range<InfiniteDirectoryIterator>);
+static_assert(rgs::range<decltype(InfinitePathSource({}))>);
+static_assert(rgs::viewable_range<decltype(InfinitePathSource({}))>);
 
 static constexpr auto DetectStream  = -1;
 static constexpr auto FirstStream   = 0;
@@ -198,8 +159,7 @@ using namespace std::chrono_literals;
 
 // clang-format off
 auto makeFrames(fs::path Directory) -> std::generator<video::Frame> {
-	auto EndlessStreamOfPaths = InfiniteDirectoryIterator(std::move(Directory));
-	auto PreprocessedMediaFiles = EndlessStreamOfPaths
+	auto PreprocessedMediaFiles = InfinitePathSource(std::move(Directory))
 		                        | vws::filter(hasExtension(".gif"))
 		                        | vws::transform(tryOpenAsGIF)
 		                        | vws::transform(tryOpenVideoDecoder)

@@ -1,6 +1,12 @@
 ﻿#pragma once
-#include <concepts>
-#include <type_traits>
+#include <version>
+#if __cpp_lib_modules >= 202207L
+import std;
+#else
+#	include <concepts>
+#	include <cstring>
+#	include <type_traits>
+#endif
 
 // Wrap C-style 'things' that are allocated in dynamic memory and their related APIs
 //
@@ -66,20 +72,21 @@ public:
 	static constexpr construct_t constructed = {};
 
 	[[nodiscard]] constexpr c_resource() noexcept = default;
-	[[nodiscard]] constexpr explicit c_resource(
-	    construct_t) noexcept requires std::is_invocable_r_v<T *, Constructor>
+	[[nodiscard]] constexpr explicit c_resource(construct_t) noexcept
+	    requires std::is_invocable_r_v<T *, Constructor>
 	: ptr_{ construct() } {}
 
 	template <typename... Ts>
-		requires(sizeof...(Ts) > 0 && std::is_invocable_r_v<T *, Constructor, Ts...>)
+	    requires(sizeof...(Ts) > 0 && std::is_invocable_r_v<T *, Constructor, Ts...>)
 	[[nodiscard]] constexpr explicit(sizeof...(Ts) == 1)
 	    c_resource(Ts &&... Args) noexcept
 	: ptr_{ construct(static_cast<Ts &&>(Args)...) } {}
 
 	template <typename... Ts>
-		requires(sizeof...(Ts) > 0 && requires(T * p, Ts... Args) {
-			{ construct(&p, Args...) } -> std::same_as<void>;
-		})
+	    requires(sizeof...(Ts) > 0 &&
+	             requires(T * p, Ts... Args) {
+		             { construct(&p, Args...) } -> std::same_as<void>;
+	             })
 	[[nodiscard]] constexpr explicit(sizeof...(Ts) == 1)
 	    c_resource(Ts &&... Args) noexcept
 	: ptr_{ null } {
@@ -87,7 +94,7 @@ public:
 	}
 
 	template <typename... Ts>
-		requires(std::is_invocable_v<Constructor, T **, Ts...>)
+	    requires(std::is_invocable_v<Constructor, T **, Ts...>)
 	[[nodiscard]] constexpr auto emplace(Ts &&... Args) noexcept {
 		_destruct(ptr_);
 		ptr_ = null;
@@ -116,8 +123,14 @@ public:
 	    std::is_invocable_v<Destructor, T *> || std::is_invocable_v<Destructor, T **>;
 
 	constexpr ~c_resource() noexcept = delete;
-	constexpr ~c_resource() noexcept requires destructible { _destruct(ptr_); }
-	constexpr void clear() noexcept requires destructible {
+	constexpr ~c_resource() noexcept
+	    requires destructible
+	{
+		_destruct(ptr_);
+	}
+	constexpr void clear() noexcept
+	    requires destructible
+	{
 		_destruct(ptr_);
 		ptr_ = null;
 	}
@@ -134,6 +147,11 @@ public:
 		return r.ptr_ != null;
 	}
 
+	auto operator<=>(const c_resource &) = delete;
+	[[nodiscard]] bool operator==(const c_resource & rhs) const noexcept {
+		return 0 == std::memcmp(ptr_, rhs.ptr_, sizeof(T));
+	}
+
 #if defined(__cpp_explicit_this_parameter)
 	template <typename U, typename V>
 	static constexpr bool less_const = std::is_const_v<U> < std::is_const_v<V>;
@@ -141,47 +159,47 @@ public:
 	static constexpr bool similar = std::is_same_v<std::remove_const_t<U>, T>;
 
 	template <typename U, typename Self>
-		requires(similar<U, T> && !less_const<U, Self>)
+	    requires(similar<U, T> && !less_const<U, Self>)
 	[[nodiscard]] constexpr operator U *(this Self && self) noexcept {
-		return like(self);
+		return std::forward_like<Self>(self.ptr_);
 	}
 	[[nodiscard]] constexpr auto operator->(this auto && self) noexcept {
-		return like(self);
+		return std::forward_like<decltype(self)>(self.ptr_);
 	}
 	[[nodiscard]] constexpr auto get(this auto && self) noexcept {
-		return like(self);
+		return std::forward_like<decltype(self)>(self.ptr_);
 	}
 #else
-	[[nodiscard]] constexpr operator pointer() noexcept {
-		return like(*this);
-	}
+	[[nodiscard]] constexpr operator pointer() noexcept { return like(*this); }
 	[[nodiscard]] constexpr operator const_pointer() const noexcept {
 		return like(*this);
 	}
-	[[nodiscard]] constexpr pointer operator->() noexcept {
-		return like(*this);
-	}
+	[[nodiscard]] constexpr pointer operator->() noexcept { return like(*this); }
 	[[nodiscard]] constexpr const_pointer operator->() const noexcept {
 		return like(*this);
 	}
-	[[nodiscard]] constexpr pointer get() noexcept {
-		return like(*this);
+	[[nodiscard]] constexpr pointer get() noexcept { return like(*this); }
+	[[nodiscard]] constexpr const_pointer get() const noexcept { return like(*this); }
+
+private:
+	static constexpr auto like(c_resource & self) noexcept { return self.ptr_; }
+	static constexpr auto like(const c_resource & self) noexcept {
+		return static_cast<const_pointer>(self.ptr_);
 	}
-	[[nodiscard]] constexpr const_pointer get() const noexcept {
-		return like(*this);
-	}
+
+public:
 #endif
 
 	constexpr void reset(pointer ptr = null) noexcept {
 		_destruct(ptr_);
 		ptr_ = ptr;
-	};
+	}
 
 	constexpr pointer release() noexcept {
 		auto ptr = ptr_;
 		ptr_     = null;
 		return ptr;
-	};
+	}
 
 	template <auto * CleanupFunction>
 	struct guard {
@@ -203,22 +221,17 @@ public:
 	};
 
 private:
-	constexpr static void
-	_destruct(pointer & p) noexcept requires std::is_invocable_v<Destructor, T *> {
+	constexpr static void _destruct(pointer & p) noexcept
+	    requires std::is_invocable_v<Destructor, T *>
+	{
 		if (p != null)
 			destruct(p);
 	}
-	constexpr static void
-	_destruct(pointer & p) noexcept requires std::is_invocable_v<Destructor, T **> {
+	constexpr static void _destruct(pointer & p) noexcept
+	    requires std::is_invocable_v<Destructor, T **>
+	{
 		if (p != null)
 			destruct(&p);
-	}
-
-	static constexpr auto like(c_resource & self) noexcept {
-		return self.ptr_;
-	}
-	static constexpr auto like(const c_resource & self) noexcept {
-		return static_cast<const_pointer>(self.ptr_);
 	}
 
 	pointer ptr_ = null;

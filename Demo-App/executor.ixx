@@ -22,8 +22,8 @@ constexpr inline bool isExecutor =
     asio::is_executor<T>::value or asio::execution::is_executor<T>::value;
 template <typename T>
 constexpr inline bool hasExecutor = requires(T t) {
-	{ t.get_executor() };
-};
+	                                    { t.get_executor() };
+                                    };
 
 auto onException(std::stop_source Stop) {
 	return [Stop_ = std::move(Stop)](std::exception_ptr pEx) mutable {
@@ -63,7 +63,7 @@ std::stop_source getStop(asio::execution_context & Context) {
 }
 
 template <typename T>
-asio::execution_context & getContext(T & Object) {
+asio::execution_context & getContext(T & Object) noexcept {
 	if constexpr (isExecutionContext<T>)
 		return Object;
 	else if constexpr (isExecutor<T>)
@@ -80,6 +80,11 @@ export [[nodiscard]] auto StopAssetOf(auto & Object) {
 	return executor::getStop(executor::getContext(Object));
 }
 
+template <typename T>
+static constexpr bool isAwaitable = false;
+template <typename T>
+static constexpr bool isAwaitable<asio::awaitable<T>> = true;
+
 // A compile-time function that answers the questions if a given callable 'Func'
 //  - can be called with a set of argument types 'Ts'
 //  - returns an awaitable
@@ -87,17 +92,9 @@ export [[nodiscard]] auto StopAssetOf(auto & Object) {
 
 template <typename Func, typename... Ts>
 struct isCallable {
-	static constexpr bool invocable = std::is_invocable_v<Func, Ts...>;
-	using ReturnType                = std::invoke_result_t<Func, Ts...>;
-
-	template <typename T>
-	static consteval bool isAwaitable(asio::awaitable<T> *) {
-		return true;
-	}
-	static consteval bool isAwaitable(auto *) { return false; }
-	static consteval ReturnType * returned() { return nullptr; }
-
-	static constexpr bool returnsAwaitable = isAwaitable(returned());
+	using ReturnType                       = std::invoke_result_t<Func, Ts...>;
+	static constexpr bool invocable        = std::is_invocable_v<Func, Ts...>;
+	static constexpr bool returnsAwaitable = isAwaitable<ReturnType>;
 	static constexpr bool synchronously    = invocable and not returnsAwaitable;
 	static constexpr bool asynchronously   = invocable and returnsAwaitable;
 };
@@ -107,9 +104,9 @@ struct isCallable {
 
 #define WORKITEM std::invoke(std::forward<Func>(Work), std::forward<Ts>(Args)...)
 
-export template <typename Exec, typename Func, typename... Ts>
-	requires(isCallable<Func, Ts...>::asynchronously)
-void commission(Exec && Executor, Func && Work, Ts &&... Args) {
+export template <typename Func, typename... Ts>
+    requires(isCallable<Func, Ts...>::asynchronously)
+void commission(auto && Executor, Func && Work, Ts &&... Args) {
 	auto Stop = executor::StopAssetOf(Executor);
 	asio::co_spawn(Executor, WORKITEM, executor::onException(Stop));
 }

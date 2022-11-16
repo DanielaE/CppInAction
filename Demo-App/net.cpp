@@ -43,7 +43,7 @@ using namespace std::string_view_literals;
 static constexpr auto Local = "localhost"sv;
 
 // precondition: TimeBudget > 0
-auto resolveHostEndpoints(std::string_view HostName, uint16_t Port,
+auto resolveHostEndpoints(std::string_view HostName, tPort Port,
                           std::chrono::milliseconds TimeBudget)
     -> std::vector<tEndpoint> {
 	using tResolver = asio::ip::tcp::resolver;

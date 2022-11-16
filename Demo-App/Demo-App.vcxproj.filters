@@ -37,9 +37,6 @@
     <ClCompile Include="videodecoder.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
-    <ClCompile Include="generator.ixx">
-      <Filter>Modules</Filter>
-    </ClCompile>
     <ClCompile Include="gui.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
@@ -58,11 +55,15 @@
     <ClCompile Include="gui.cpp">
       <Filter>Modules</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="generator.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <ClCompile Include="events.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="client.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="server.ixx">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="Demo-App.xml">
