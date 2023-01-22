@@ -23,6 +23,10 @@ There is also a [minimum set of sources](https://github.com/DanielaE/libav.modul
 
 I will **not** provide the module implementation of Boost.Program_options. Please bring your own favourite command line processor and modify module `the.whole.caboodle` accordingly.
 
+The videos of the keynote presentations are here:
+ - [CppCon 2022](https://youtu.be/yUIFdL3D0Vk)
+ - [Meeting C++ 2022](https://youtu.be/el-xE645Clo)
+
 ### License
 This work is licensed under a
 [Creative Commons Attribution-ShareAlike 4.0 International License][cc-by-sa].
