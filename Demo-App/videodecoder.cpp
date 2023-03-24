@@ -71,7 +71,7 @@ auto acceptOnlyGIF(libav::File File) -> libav::File {
 	        FirstStream or
 	    pCodec == nullptr or pCodec->id != AV_CODEC_ID_GIF)
 		File = {};
-	return std::move(File);
+	return File;
 }
 
 auto tryOpenAsGIF(fs::path Path) -> libav::File {

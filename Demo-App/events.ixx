@@ -1,6 +1,7 @@
 export module events;
 
 import std;
+import <csignal>;
 
 import asio; // precompiled module, taken from BMI cache
 import executor;

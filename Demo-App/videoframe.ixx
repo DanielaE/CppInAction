@@ -26,8 +26,8 @@ struct FrameHeader {
 
 	using µSeconds = chrono::duration<unsigned, std::micro>;
 
-	int Width_ : 16;
-	int Height_ : 16;
+	int Width_     : 16;
+	int Height_    : 16;
 	int LinePitch_ : 16;
 	int Format_ : FormatBits();
 	int Sequence_ : 16 - FormatBits();
