@@ -77,7 +77,7 @@ auto acceptOnlyGIF(libav::File File) -> libav::File {
 auto tryOpenAsGIF(fs::path Path) -> libav::File {
 	const auto Filename = caboodle::utf8Path(std::move(Path));
 	libav::File File;
-	if (not Path.empty() and
+	if (not Filename.empty() and
 	    successful(File.emplace(Filename.c_str(), nullptr, nullptr))) {
 		File = acceptOnlyGIF(std::move(File));
 	}
