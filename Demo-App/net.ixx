@@ -68,7 +68,7 @@ export {
 	template <typename... Ts, typename... Us>
 	constexpr auto flatten(std::variant<tResult<Ts...>, tResult<Us...>> && Variant) {
 		using net::_map;
-		using tReturn = std::type_identity_t<Ts..., Us...>;
+		using tReturn = std::type_identity<Ts..., Us...>::type;
 		return std::visit(
 		    [](auto && Tuple) {
 			    return _map<tReturn>(std::move(Tuple));
@@ -88,19 +88,17 @@ export {
 		return { Bytes.data(), Bytes.size() };
 	}
 
-	extern "C++" {
 	auto sendTo(tSocket & Socket, tTimer & Timer, tConstBuffers DataToSend)
-	    -> asio::awaitable<tExpectSize>;
+	    ->asio::awaitable<tExpectSize>;
 	auto receiveFrom(tSocket & Socket, tTimer & Timer, tByteSpan SpaceToFill)
-	    -> asio::awaitable<tExpectSize>;
+	    ->asio::awaitable<tExpectSize>;
 	auto connectTo(tEndpoints EndpointsToTry, tTimer & Timer)
-	    -> asio::awaitable<tExpectSocket>;
+	    ->asio::awaitable<tExpectSocket>;
 	auto expired(tTimer & Timer) noexcept -> asio::awaitable<bool>;
 
 	void close(tSocket & Socket) noexcept;
 	auto resolveHostEndpoints(std::string_view HostName, tPort Port,
 	                          std::chrono::milliseconds TimeBudget)
-	    -> std::vector<tEndpoint>;
-	}
+	    ->std::vector<tEndpoint>;
 } // export
 } // namespace net
