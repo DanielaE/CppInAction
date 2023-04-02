@@ -138,7 +138,10 @@ export [[nodiscard]] auto makeScheduler(asio::io_context & Context,
 // abort operation of a given object depending on its capabilities.
 // the close() operation is customizable to cater for more involved closing requirements.
 
-#define THIS_WORKS(x) (requires(T Object) { { x }; }) x;
+#define THIS_WORKS(x)                                                                    \
+	(requires(T Object) {                                                                \
+		 { x };                                                                          \
+	 }) x;
 
 // clang-format off
 template <typename T>

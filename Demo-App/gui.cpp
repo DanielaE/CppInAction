@@ -31,8 +31,8 @@ static auto centeredBox(tDimensions Dimensions,
 FancyWindow::FancyWindow(tDimensions Dimensions) noexcept {
 	const auto Viewport = centeredBox(Dimensions);
 
-	Window_   = { "Look at me!",
-				  Viewport.x, Viewport.y, Viewport.Width, Viewport.Height,
+	Window_   = { "Look at me!", // clang-format off
+		          Viewport.x, Viewport.y, Viewport.Width, Viewport.Height, // clang-format on
 		          SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN };
 	Renderer_ = { Window_, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC };
 

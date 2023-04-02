@@ -1,26 +1,35 @@
 ---
 Language:        Cpp
-Standard:        Cpp11
+Standard:        Latest
 BasedOnStyle:    LLVM
 ColumnLimit:     90
 IndentWidth:     4
 TabWidth:        4
 UseTab:          ForIndentation
 AccessModifierOffset: -4
-AlignConsecutiveAssignments: Consecutive
-AlignConsecutiveDeclarations: None
-AlwaysBreakTemplateDeclarations: Yes
+AlignConsecutiveAssignments:
+  Enabled:         true
+  AlignCompound:   true
+  PadOperators:    false
+AlignConsecutiveBitFields:
+  Enabled:         true
 AllowShortBlocksOnASingleLine: Empty
 AllowShortCaseLabelsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: Inline
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLambdasOnASingleLine: Empty
+AlwaysBreakTemplateDeclarations: Yes
 BreakConstructorInitializers: BeforeComma
+BreakBeforeBraces: Custom
+BraceWrapping:
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
 ConstructorInitializerIndentWidth: 0
 Cpp11BracedListStyle: false
 CompactNamespaces: true
 IndentCaseLabels: true
-IndentRequires: true
+IndentRequiresClause: true
 IndentPPDirectives: AfterHash
 KeepEmptyLinesAtTheStartOfBlocks: false
 PointerAlignment: Middle
@@ -48,21 +57,5 @@ IncludeCategories:
   # Headers in "" with extension.
   - Regex:           '"([A-Za-z0-9.\Q/-_\E])+"'
     Priority:        2
-BreakBeforeBraces: Custom
-BraceWrapping:
-  AfterClass:      false
-  AfterControlStatement: false
-  AfterEnum:       false
-  AfterFunction:   false
-  AfterNamespace:  false
-  AfterObjCDeclaration: false
-  AfterStruct:     false
-  AfterUnion:      false
-  BeforeCatch:     false
-  BeforeElse:      false
-  IndentBraces:    false
-  SplitEmptyFunction: false
-  SplitEmptyRecord: false
-  SplitEmptyNamespace: false
 ...
 

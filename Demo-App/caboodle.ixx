@@ -52,10 +52,10 @@ static inline auto convertFromWide(std::wstring_view U16) noexcept {
 }
 
 template <typename String>
-concept canResizeAndOverwrite = requires(String Str, std::size_t Size,
-                                         std::size_t (*Callable)(char *, std::size_t)) {
-	{ Str.resize_and_overwrite(Size, Callable) };
-};
+concept canResizeAndOverwrite =
+    requires(String Str, std::size_t Size, std::size_t (*Callable)(char *, std::size_t)) {
+	    { Str.resize_and_overwrite(Size, Callable) };
+    };
 
 template <canResizeAndOverwrite String = std::string>
 decltype(auto) toUTF8(std::wstring_view Utf16, String && Utf8 = {}) {

@@ -143,7 +143,8 @@ auto decodeFrames(libav::File File, libav::Codec Decoder)
 		while (successful(Result)) {
 			Result = avcodec_receive_frame(Decoder, Frame);
 			if (successful(Result))
-				co_yield makeVideoFrame(Frame, Decoder->frame_number, TickDuration);
+				co_yield makeVideoFrame(Frame, static_cast<int>(Decoder->frame_num),
+				                        TickDuration);
 		}
 	}
 }

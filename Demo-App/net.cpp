@@ -49,7 +49,7 @@ auto resolveHostEndpoints(std::string_view HostName, tPort Port,
 	using tResolver = asio::ip::tcp::resolver;
 	auto Flags      = tResolver::numeric_service;
 	if (HostName.empty() || HostName == Local) {
-		Flags |= tResolver::passive;
+		Flags    |= tResolver::passive;
 		HostName = Local;
 	}
 
