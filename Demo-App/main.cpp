@@ -39,8 +39,8 @@ using namespace std::chrono_literals;
 static constexpr auto ServerPort        = net::tPort{ 34567 };
 static constexpr auto ResolveTimeBudget = 1s;
 
-int main() {
-	auto [MediaDirectory, ServerName] = caboodle::getOptions();
+int main(int argc, char * argv[]) {
+	auto [MediaDirectory, ServerName] = caboodle::getOptions(argc, argv);
 	if (MediaDirectory.empty())
 		return -2;
 	const auto ServerEndpoints =

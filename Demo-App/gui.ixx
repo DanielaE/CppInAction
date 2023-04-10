@@ -1,4 +1,5 @@
 export module gui;
+import std;
 
 import "c_resource.hpp";
 import sdl; // precompiled module, taken from BMI cache

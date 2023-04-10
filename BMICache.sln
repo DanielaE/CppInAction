@@ -5,13 +5,13 @@ VisualStudioVersion = 17.3.32519.111
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libav", "libav\libav.vcxproj", "{1569001E-8080-4A44-93FF-C544C13D45F6}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "boost.program_options", "boost.program_options\boost.program_options.vcxproj", "{B02D2540-5B5F-4348-BE2A-D280996ECD09}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "std", "msvc-stl\std.vcxproj", "{B02D2540-5B5F-4348-BE2A-D28099AECD09}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "asio", "asio\module\asio.vcxproj", "{1569001E-8080-4A44-93FF-CA44C1554BC6}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sdl", "SDL\module\sdl2.vcxproj", "{1569001E-8080-4A44-93FF-CA44C15545C6}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "argparse", "argparse\module\argparse.vcxproj", "{066847E0-D195-4FDE-A183-2484514AB543}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,6 @@ Global
 		{1569001E-8080-4A44-93FF-C544C13D45F6}.Debug|x64.Build.0 = Debug|x64
 		{1569001E-8080-4A44-93FF-C544C13D45F6}.Release|x64.ActiveCfg = Release|x64
 		{1569001E-8080-4A44-93FF-C544C13D45F6}.Release|x64.Build.0 = Release|x64
-		{B02D2540-5B5F-4348-BE2A-D280996ECD09}.Debug|x64.ActiveCfg = Debug|x64
-		{B02D2540-5B5F-4348-BE2A-D280996ECD09}.Debug|x64.Build.0 = Debug|x64
-		{B02D2540-5B5F-4348-BE2A-D280996ECD09}.Release|x64.ActiveCfg = Release|x64
-		{B02D2540-5B5F-4348-BE2A-D280996ECD09}.Release|x64.Build.0 = Release|x64
 		{B02D2540-5B5F-4348-BE2A-D28099AECD09}.Debug|x64.ActiveCfg = Debug|x64
 		{B02D2540-5B5F-4348-BE2A-D28099AECD09}.Debug|x64.Build.0 = Debug|x64
 		{B02D2540-5B5F-4348-BE2A-D28099AECD09}.Release|x64.ActiveCfg = Release|x64
@@ -39,6 +35,10 @@ Global
 		{1569001E-8080-4A44-93FF-CA44C15545C6}.Debug|x64.Build.0 = Debug|x64
 		{1569001E-8080-4A44-93FF-CA44C15545C6}.Release|x64.ActiveCfg = Release|x64
 		{1569001E-8080-4A44-93FF-CA44C15545C6}.Release|x64.Build.0 = Release|x64
+		{066847E0-D195-4FDE-A183-2484514AB543}.Debug|x64.ActiveCfg = Debug|x64
+		{066847E0-D195-4FDE-A183-2484514AB543}.Debug|x64.Build.0 = Debug|x64
+		{066847E0-D195-4FDE-A183-2484514AB543}.Release|x64.ActiveCfg = Release|x64
+		{066847E0-D195-4FDE-A183-2484514AB543}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

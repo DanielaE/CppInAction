@@ -28,6 +28,11 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ItemGroup>
+    <ClCompile Include="caboodle-program-arguments.cpp" />
+    <ClCompile Include="caboodle-posix.cpp">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="caboodle-windows.cpp" />
     <ClCompile Include="client.ixx" />
     <ClCompile Include="events.ixx" />
     <ClCompile Include="gui.cpp" />

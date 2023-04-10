@@ -78,9 +78,9 @@ export {
 
 	template <typename Out, typename In>
 	auto replace(net::tExpected<In> && Input, Out && Replacement)->net::tExpected<Out> {
-		if (not Input.has_value())
-			return std::unexpected{ std::move(Input).error() };
-		return std::forward<Out>(Replacement);
+		return std::move(Input).transform([&](In &&) {
+			return std::forward<Out>(Replacement);
+		});
 	}
 
 	constexpr auto asBytes(const auto & Object) noexcept -> asio::const_buffer {

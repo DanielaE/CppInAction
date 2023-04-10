@@ -64,6 +64,15 @@
     <ClCompile Include="server.ixx">
       <Filter>Modules</Filter>
     </ClCompile>
+    <ClCompile Include="caboodle-posix.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="caboodle-windows.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="caboodle-program-arguments.cpp">
+      <Filter>Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="Demo-App.xml">

@@ -22,15 +22,15 @@ using tFrame  = stdex::c_resource<AVFrame, av_frame_alloc, av_frame_free>;
 using tPacket = stdex::c_resource<AVPacket, av_packet_alloc, av_packet_free>;
 
 // frames and packets are reference-counted and always constructed non-empty
-struct Frame : tFrame {
-	[[nodiscard]] Frame()
-	: tFrame(constructed){};
-	[[nodiscard]] auto dropReference() { return Frame::guard<av_frame_unref>(*this); }
+struct [[nodiscard]] Frame : tFrame {
+	Frame()
+	: tFrame(constructed) {}
+	auto dropReference() { return Frame::guard<av_frame_unref>(*this); }
 };
-struct Packet : tPacket {
-	[[nodiscard]] Packet()
-	: tPacket(constructed){};
-	[[nodiscard]] auto dropReference() { return Packet::guard<av_packet_unref>(*this); }
+struct [[nodiscard]] Packet : tPacket {
+	Packet()
+	: tPacket(constructed) {}
+	auto dropReference() { return Packet::guard<av_packet_unref>(*this); }
 };
 } // namespace libav
 

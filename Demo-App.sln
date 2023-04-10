@@ -5,6 +5,39 @@ VisualStudioVersion = 17.3.32519.111
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Demo-App", "Demo-App\Demo-App.vcxproj", "{DF4B393A-367F-4F69-8DF8-94775EF8FB36}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "prebuilt", "prebuilt", "{074EACD6-9A2F-4FEF-B193-9998B0136AB5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Asio", "Asio", "{78FBB37F-B5B4-4106-B244-629CBC0ECB20}"
+	ProjectSection(SolutionItems) = preProject
+		asio\module\asio-module.h = asio\module\asio-module.h
+		asio\module\asio.ixx = asio\module\asio.ixx
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "argparse", "argparse", "{C881155E-4B39-41B9-A217-1002A75C8210}"
+	ProjectSection(SolutionItems) = preProject
+		argparse\module\argparse.ixx = argparse\module\argparse.ixx
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "libav", "libav", "{E7F2B398-D709-4DE9-97F0-66390FE3D794}"
+	ProjectSection(SolutionItems) = preProject
+		libav\libav.ixx = libav\libav.ixx
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SDL", "SDL", "{BC316499-16F2-45D6-A2FE-D2C3B6F2650E}"
+	ProjectSection(SolutionItems) = preProject
+		SDL\module\sdl2-macros_global.ixx = SDL\module\sdl2-macros_global.ixx
+		SDL\module\sdl2-macros_sdl.ixx = SDL\module\sdl2-macros_sdl.ixx
+		SDL\module\sdl2-x.h = SDL\module\sdl2-x.h
+		SDL\module\sdl2.h = SDL\module\sdl2.h
+		SDL\module\sdl2.ixx = SDL\module\sdl2.ixx
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "STL", "STL", "{BB0F1247-5E4C-4CF4-84A3-8BDFBD23A3BF}"
+	ProjectSection(SolutionItems) = preProject
+		msvc-stl\allstd.hpp = msvc-stl\allstd.hpp
+		msvc-stl\std.ixx = msvc-stl\std.ixx
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -18,6 +51,13 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{78FBB37F-B5B4-4106-B244-629CBC0ECB20} = {074EACD6-9A2F-4FEF-B193-9998B0136AB5}
+		{C881155E-4B39-41B9-A217-1002A75C8210} = {074EACD6-9A2F-4FEF-B193-9998B0136AB5}
+		{E7F2B398-D709-4DE9-97F0-66390FE3D794} = {074EACD6-9A2F-4FEF-B193-9998B0136AB5}
+		{BC316499-16F2-45D6-A2FE-D2C3B6F2650E} = {074EACD6-9A2F-4FEF-B193-9998B0136AB5}
+		{BB0F1247-5E4C-4CF4-84A3-8BDFBD23A3BF} = {074EACD6-9A2F-4FEF-B193-9998B0136AB5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {69EB57EB-41BD-45B1-97B2-EF2661846A8B}
