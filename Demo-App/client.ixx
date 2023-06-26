@@ -1,6 +1,7 @@
 export module client;
 import std;
 
+import asio;
 import net;
 import gui;
 import video;
