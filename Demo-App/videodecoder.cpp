@@ -182,8 +182,13 @@ auto makeFrames(fs::path Directory) -> std::generator<video::Frame> {
 	for (auto [File, Decoder] : PreprocessedMediaFiles) {
 		if (have(Decoder)) {
 			std::println("decoding <{}>", File->url);
+#if defined(__clang__)
+            for (auto Frame : decodeFrames(std::move(File), std::move(Decoder)))
+			    co_yield Frame;
+#else
 			co_yield rgs::elements_of(
 			    decodeFrames(std::move(File), std::move(Decoder)));
+#endif
 		} else {
 			co_yield video::makeFillerFrame(100ms);
 		}
