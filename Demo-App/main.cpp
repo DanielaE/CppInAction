@@ -22,9 +22,9 @@ The application
  - handles timeouts and errors properly and performs a clean shutdown if needed
 ==============================================================================*/
 
-import std; // precompiled module, taken from BMI cache
+import std;
 
-import asio; // precompiled module, taken from BMI cache
+import asio;
 import executor;
 import gui;
 import net;

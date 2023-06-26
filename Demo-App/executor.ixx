@@ -1,7 +1,7 @@
 export module executor;
 import std;
 
-import asio; // precompiled module, taken from BMI cache
+import asio;
 
 // Convenience types and functions to deal with the executor part of the
 // Asio library https://think-async.com/Asio/

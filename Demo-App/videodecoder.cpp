@@ -1,10 +1,12 @@
-﻿module video:decoder.pipeline;
+﻿module;
+#include "c_resource.hpp"
+
+module video:decoder.pipeline;
 import std;
 
 import :frame;
-import "c_resource.hpp";
 import the.whole.caboodle;
-import libav; // precompiled module, taken from BMI cache
+import libav;
 
 namespace fs  = std::filesystem;
 namespace rgs = std::ranges;

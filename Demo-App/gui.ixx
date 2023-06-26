@@ -1,8 +1,10 @@
+module;
+#include "c_resource.hpp"
+
 export module gui;
 import std;
 
-import "c_resource.hpp";
-import sdl; // precompiled module, taken from BMI cache
+import sdl;
 import video;
 
 // wrap the SDL (Simple Directmedia Layer https://www.libsdl.org/) C API types

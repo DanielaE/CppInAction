@@ -1,7 +1,7 @@
 export module net;
 import std;
 
-import asio; // precompiled module, taken from BMI cache
+import asio;
 
 // Convenience types and functions to deal with the networking part of the
 // Asio library https://think-async.com/Asio/
@@ -83,7 +83,7 @@ export {
 		});
 	}
 
-	constexpr auto asBytes(const auto & Object) noexcept -> asio::const_buffer {
+	auto asBytes(const auto & Object) noexcept -> asio::const_buffer {
 		const auto Bytes = std::as_bytes(std::span{ &Object, 1 });
 		return { Bytes.data(), Bytes.size() };
 	}

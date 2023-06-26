@@ -1,7 +1,7 @@
 export module video:frame;
 import std;
 
-import libav; // precompiled module, taken from BMI cache
+import libav;
 
 export namespace video {
 enum class PixelFormat : unsigned char { invalid, RGBA, BGRA, _largest = BGRA };

@@ -32,7 +32,9 @@
     <ClCompile Include="caboodle-posix.cpp">
       <ExcludedFromBuild>true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="caboodle-windows.cpp" />
+    <ClCompile Include="caboodle-windows.cpp">
+      <ExcludedFromBuild>false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="client.ixx" />
     <ClCompile Include="events.ixx" />
     <ClCompile Include="gui.cpp" />
@@ -56,6 +58,23 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="Demo-App.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\argparse\module\argparse.vcxproj">
+      <Project>{066847e0-d195-4fde-a183-2484514ab543}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\asio\asio\module\asio.vcxproj">
+      <Project>{1569001e-8080-4a44-93ff-ca44c1554bc6}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\libav.module\module\libav.vcxproj">
+      <Project>{1569001e-8080-4a44-93ff-c544c13d45f6}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\SDL\module\sdl2.vcxproj">
+      <Project>{1569001e-8080-4a44-93ff-ca44c15545c6}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\stl\std.vcxproj">
+      <Project>{b02d2540-5b5f-4348-be2a-d28099aecd09}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemDefinitionGroup>
     <ClCompile>

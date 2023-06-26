@@ -1,7 +1,7 @@
 ﻿module net;
 import std;
 
-import asio; // precompiled module, taken from BMI cache
+import asio;
 
 // the lowest-level networking routines with support for cancellation and timeouts
 

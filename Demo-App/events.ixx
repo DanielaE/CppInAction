@@ -1,9 +1,10 @@
+module;
+#include <csignal>
+
 export module events;
-
 import std;
-import <csignal>;
 
-import asio; // precompiled module, taken from BMI cache
+import asio;
 import executor;
 import gui;
 import net;
