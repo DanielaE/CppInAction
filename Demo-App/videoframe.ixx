@@ -13,8 +13,8 @@ consteval auto FormatBits() {
 constexpr PixelFormat fromLibav(int Format) {
 	using enum PixelFormat;
 	switch (Format) {
-		case AVPixelFormat::AV_PIX_FMT_RGBA: return RGBA;
-		case AVPixelFormat::AV_PIX_FMT_BGRA: return BGRA;
+		case AV_PIX_FMT_RGBA: return RGBA;
+		case AV_PIX_FMT_BGRA: return BGRA;
 		default: return invalid;
 	}
 }
