@@ -45,11 +45,28 @@ struct FrameHeader {
 	}
 	constexpr bool isFirstFrame() const noexcept { return Sequence_ <= 1; }
 };
+
+#ifdef __clang__ // Clang 16 hasn't yet implemented P2615 / C++23
+
+} // namespace video
+
+static_assert(sizeof(video::FrameHeader) == video::FrameHeader::SizeBytes);
+static_assert(std::is_trivial_v<video::FrameHeader>,
+              "Please keep me trivial"); // guarantee relocatability!
+static_assert(std::is_trivially_destructible_v<video::FrameHeader>,
+              "Please keep me 'implicit lifetime'");
+
+export namespace video {
+
+#else
+
 static_assert(sizeof(FrameHeader) == FrameHeader::SizeBytes);
 static_assert(std::is_trivial_v<FrameHeader>,
               "Please keep me trivial"); // guarantee relocatability!
 static_assert(std::is_trivially_destructible_v<FrameHeader>,
               "Please keep me 'implicit lifetime'");
+
+#endif
 
 using tPixels = std::span<const std::byte>;
 
