@@ -25,7 +25,8 @@ constexpr inline bool hasExecutor = requires(T t) {
 	                                    { t.get_executor() };
                                     };
 
-auto onException(std::stop_source Stop) {
+auto onException(std::stop_source Stop)
+    -> std::move_only_function<void(std::exception_ptr)> {
 	return [Stop_ = std::move(Stop)](std::exception_ptr pEx) mutable {
 		if (pEx)
 			Stop_.request_stop();
