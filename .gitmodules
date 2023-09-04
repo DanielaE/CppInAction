@@ -1,0 +1,15 @@
+[submodule "asio"]
+	path = asio
+	url = https://github.com/DanielaE/asio.git
+[submodule "argparse"]
+	path = argparse
+	url = https://github.com/DanielaE/argparse.git
+[submodule "libav"]
+	path = libav
+	url = https://github.com/DanielaE/libav.module.git
+[submodule "SDL"]
+	path = SDL
+	url = https://github.com/DanielaE/SDL.git
+[submodule "stl"]
+	path = stl
+	url = https://github.com/DanielaE/std.module.git
