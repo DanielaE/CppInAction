@@ -11,20 +11,49 @@ The missing pieces are:
  2) libav [FFmpeg](https://ffmpeg.org/download.html)
  3) SDL2 [SDL](https://www.libsdl.org/download-2.0.php)
  4) argparse [argparse](https://github.com/p-ranav/argparse)
+ 5) modularized standard library
 
 I have forked
  1) [Asio, branch 'module'](https://github.com/DanielaE/asio/tree/module)
  2) [SDL2, branch 'module'](https://github.com/DanielaE/SDL/tree/module)
  3) [argparse, branch 'module'](https://github.com/DanielaE/argparse/tree/module)
- 4) [Microsoft's standard library, branch 'my-stl'](https://github.com/DanielaE/STL/tree/my-stl)
+ 4) [libav, branch 'module'](https://github.com/DanielaE/libav.module/tree/module)
+ 
+ plus
 
-which contain the necessary changes to compile Asio, SDL, and argparse as modules. My take on the STL adds Casey Carter's current implementation of `<generator>`, plus my implementation of `<print>` and partial implementation of C++26's *explicit lifetime management* [P2590](https://wg21.link/P2590) on top of the latest work in Microsoft's open source standard library.
+ 5) a modularized standard library with a polyfill for the missing, not yet implemented parts: [std.module](https://github.com/DanielaE/std.module/tree/module)
+
+which contain the necessary changes to compile Asio, SDL, libav, and argparse as modules. My take on the C++ standard library module adds Casey Carter's current implementation of `<generator>`, plus my implementation of `<print>` and a partial implementation of C++26's *explicit lifetime management* [P2590](https://wg21.link/P2590) on top of the standard library that comes with the compiler toolset of your choice.
 
 There is also a [minimum set of sources](https://github.com/DanielaE/libav.module/tree/main) from FFmpeg v6.0 to compile module `libav`. You need to provide the necessary link libraries yourself if you want to build the executable.
 
 The videos of the keynote presentations are here:
  - [CppCon 2022](https://youtu.be/yUIFdL3D0Vk)
  - [Meeting C++ 2022](https://youtu.be/el-xE645Clo)
+
+## Building the app
+## Windows
+Update 4 or better is highly recommended.
+ - open a VS2022 command line window
+ - cmake -B bld-msvc -G Ninja -Wno-dev -DCMAKE_CXX_STANDARD=23 --fresh
+ - ninja -C bld-msvc
+
+## MSYS2 (UCRT64)
+Clang 16.0.2 or better is required. 
+ - open a MSYS2 window
+ - export CC=clang
+ - export CXX=clang++
+ - cmake -B bld-clang -G Ninja -Wno-dev -DCMAKE_CXX_STANDARD=23 -DCMAKE_CXX_FLAGS="-stdlib=libc++" --fresh
+ - ninja -C bld-clang
+
+## Linux
+Clang 16.0.2 or better is required. Clang 17 is recommended.
+ - open a terminal window
+ - export CC=clang-1x
+ - export CXX=clang++-1x
+ - cmake -B bld -G Ninja -Wno-dev -DCMAKE_CXX_STANDARD=23 -DCMAKE_CXX_FLAGS="-stdlib=libc++" --fresh
+ - ninja -C bld
+
 
 ### License
 This work is licensed under a
