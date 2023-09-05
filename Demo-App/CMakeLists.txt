@@ -28,7 +28,7 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   set(CMAKE_CXX_STANDARD 20)
   target_compile_features(demo PUBLIC cxx_std_23)
 # I do mean C++20
-  target_compile_options(demo PUBLIC -fsized-deallocation -faligned-allocation -fchar8_t)
+  target_compile_options(demo PUBLIC -fsized-deallocation -faligned-allocation)
 else()
 # these are the desired defaults
   target_compile_features(demo PUBLIC cxx_std_23)
