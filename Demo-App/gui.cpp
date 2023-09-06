@@ -1,5 +1,14 @@
 ﻿module gui;
 
+import std;
+
+#ifdef __clang__
+// Clang bug: missing/bad implementation of [module.import]/7:
+// the names from non-reexported modules must be visible
+import sdl;
+import video;
+#endif
+
 namespace gui {
 
 static const auto initializedSDL    = SDL_Init(SDL_INIT_VIDEO);
