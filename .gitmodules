@@ -7,9 +7,9 @@
 [submodule "libav"]
 	path = libav
 	url = https://github.com/DanielaE/libav.module.git
-[submodule "SDL"]
-	path = SDL
-	url = https://github.com/DanielaE/SDL.git
 [submodule "stl"]
 	path = stl
 	url = https://github.com/DanielaE/std.module.git
+[submodule "SDL"]
+	path = SDL
+	url = https://github.com/DanielaE/SDL.git
