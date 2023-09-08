@@ -130,6 +130,19 @@ constexpr auto makeVideoFrame(const libav::Frame & Frame, int FrameNumber,
 	return video::Frame{ Header, Pixels };
 }
 
+#define DECODER_HAS(x)                                                                    \
+	(requires(T Decoder) {                                                                \
+		{ Decoder->x };                                                                   \
+	})
+
+template <typename T>
+auto FrameNumber(const T & Decoder) {
+	if constexpr (DECODER_HAS(frame_num))
+		return static_cast<int>(Decoder->frame_num);
+	else if constexpr (DECODER_HAS(frame_number))
+		return Decoder->frame_number;
+}
+
 auto decodeFrames(libav::File File, libav::Codec Decoder)
     -> std::generator<video::Frame> {
 	const auto TickDuration = getTickDuration(File);
@@ -145,8 +158,7 @@ auto decodeFrames(libav::File File, libav::Codec Decoder)
 		while (successful(Result)) {
 			Result = avcodec_receive_frame(Decoder, Frame);
 			if (successful(Result))
-				co_yield makeVideoFrame(Frame, static_cast<int>(Decoder->frame_num),
-				                        TickDuration);
+				co_yield makeVideoFrame(Frame, FrameNumber(Decoder), TickDuration);
 		}
 	}
 }
