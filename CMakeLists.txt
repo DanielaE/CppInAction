@@ -30,8 +30,3 @@ add_subdirectory(libav)
 add_subdirectory(SDL)
 add_subdirectory(stl)
 add_subdirectory(Demo-App)
-
-add_executable(library-bmis library-bmis.cpp)
-target_compile_features(library-bmis PUBLIC cxx_std_20)
-target_link_libraries(library-bmis PRIVATE argparse asio libav sdl std)
-
