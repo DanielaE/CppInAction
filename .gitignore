@@ -21,3 +21,7 @@ x64
 /*.gif
 /Demo-App/P*.hpp
 /Demo-App/*.zip
+/*.sh
+media
+bld/
+build*/
